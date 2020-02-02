@@ -1,0 +1,3 @@
+# Jacobi algorithm in MPI-C
+
+...
