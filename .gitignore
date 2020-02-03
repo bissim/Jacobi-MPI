@@ -54,3 +54,6 @@ dkms.conf
 # IDE files
 **/.vscode/
 **/*.code-workspace
+
+# Custom directories
+bin/
