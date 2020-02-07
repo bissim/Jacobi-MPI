@@ -45,8 +45,8 @@ int main(int argc, char** argv) {
     double *A;
     int num_iterations;
     double err;
-	double elapsedtime;
-	struct timespec start, stop;
+    double elapsedtime;
+    struct timespec start, stop;
     unsigned char debug = 0;
 
     printf("Running %s...\n\n", argv[0]);
@@ -54,19 +54,19 @@ int main(int argc, char** argv) {
 
     // reading dimension and debug flag from command line
     if (argc < 2) {
-		printf("Insufficient number of parameters!\n");
+        printf("Insufficient number of parameters!\n");
         printf("Usage: %s <matrixOrder> [<debugFlag>]\n\n", argv[0]);
         fflush(stdout);
-		exit(EXIT_FAILURE);
-	}
+        exit(EXIT_FAILURE);
+    }
     else if (argc == 2) {
         n = atoi(argv[1]);
         debug = 0;
     }
-	else {
-		n = atoi(argv[1]);
+    else {
+        n = atoi(argv[1]);
         debug = (unsigned char) atoi(argv[2]);
-	}
+    }
     printf("Matrix dimension: %dx%d (%d elements)\n", n, n, n*n);
     fflush(stdout);
 
@@ -84,9 +84,9 @@ int main(int argc, char** argv) {
     }
 
     // apply Jacobi method
-	clock_gettime(CLOCK_REALTIME, &start);
+    clock_gettime(CLOCK_REALTIME, &start);
     num_iterations = jacobi(A, n, n, &err);
-	clock_gettime(CLOCK_REALTIME, &stop);
+    clock_gettime(CLOCK_REALTIME, &stop);
 
     if (debug) {
         printf("Resulting matrix:\n");
@@ -105,10 +105,10 @@ int main(int argc, char** argv) {
     //     exit(EXIT_FAILURE);
     // }
 
-	elapsedtime = (stop.tv_sec - start.tv_sec) +
+    elapsedtime = (stop.tv_sec - start.tv_sec) +
         (stop.tv_nsec - start.tv_nsec) /
         (double) NS_IN_S;
-	printf("Elapsed time: %f ms.\n", elapsedtime * MS_IN_S);
+    printf("Elapsed time: %f ms.\n", elapsedtime * MS_IN_S);
     fflush(stdout);
 
     printf("\n%s terminated succesfully!\n", argv[0]);
