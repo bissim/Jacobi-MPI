@@ -7,8 +7,6 @@ CFLAGS = \
 		-g \
 		-g3 \
 		-Wall \
-		-fPIC \
-		-no-pie \
 		-I$(INCLUDESDIR) \
 		-Wextra \
 		-Wformat \
@@ -32,7 +30,7 @@ $(APPUTILS): \
 		$(LIBDIR)/mpiutils.c \
 		$(INCLUDESDIR)/mpiutils.h
 	-rm -f $(LIBDIR)/lib$(APPUTILS).a
-	$(CC) $(CFLAGS) -fPIC $(LDFLAGS) -c $(LIBDIR)/*.c 
+	$(CC) $(CFLAGS) -c $(LIBDIR)/*.c 
 	mv *.o $(LIBDIR)/
 	ar -cvq $(LIBDIR)/lib$(APPUTILS).a $(LIBDIR)/*.o
 	rm $(LIBDIR)/*.o
@@ -44,7 +42,7 @@ $(APPSERNAME): $(LIBDIR)/lib$(APPUTILS).a ./$(APPSERNAME).c
 .PHONY: $(APPPARNAME)
 $(APPPARNAME): $(LIBDIR)/lib$(APPUTILS).a ./$(APPPARNAME).c
 	mpicc $(CFLAGS) -c ./$(APPPARNAME).c -o ./$(APPPARNAME).o
-	mpicc $(CFLAGS) ./$(APPPARNAME).o $(LDFLAGS) -L$(LIBDIR) -l$(APPUTILS) -o ./bin/$(APPPARNAME)
+	mpicc $(CFLAGS) -no-pie ./$(APPPARNAME).o $(LDFLAGS) -L$(LIBDIR) -l$(APPUTILS) -o ./bin/$(APPPARNAME)
 	rm ./$(APPPARNAME).o
 
 .PHONY: doc
