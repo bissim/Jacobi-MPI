@@ -1,0 +1,141 @@
+[
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-std=c99",
+            "-m64",
+            "-g",
+            "-g3",
+            "-Wall",
+            "-fPIC",
+            "-no-pie",
+            "-I./include",
+            "-Wextra",
+            "-Wformat",
+            "-Wno-unused-parameter",
+            "-Werror=format-security",
+            "-fPIC",
+            "lib/mpiutils.c"
+        ],
+        "directory": "/mnt/c/Users/bisim/git/Jacobi-MPI",
+        "file": "lib/mpiutils.c"
+    },
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-std=c99",
+            "-m64",
+            "-g",
+            "-g3",
+            "-Wall",
+            "-fPIC",
+            "-no-pie",
+            "-I./include",
+            "-Wextra",
+            "-Wformat",
+            "-Wno-unused-parameter",
+            "-Werror=format-security",
+            "-o",
+            "./bin/jacobi-serial",
+            "jacobi-serial.c"
+        ],
+        "directory": "/mnt/c/Users/bisim/git/Jacobi-MPI",
+        "file": "jacobi-serial.c"
+    },
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-I/usr/local/include",
+            "-pthread",
+            "-std=c99",
+            "-m64",
+            "-g",
+            "-g3",
+            "-Wall",
+            "-fPIC",
+            "-no-pie",
+            "-I./include",
+            "-Wextra",
+            "-Wformat",
+            "-Wno-unused-parameter",
+            "-Werror=format-security",
+            "-o",
+            "./jacobi-parallel.o",
+            "jacobi-parallel.c"
+        ],
+        "directory": "/mnt/c/Users/bisim/git/Jacobi-MPI",
+        "file": "jacobi-parallel.c"
+    },
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-std=c99",
+            "-m64",
+            "-g",
+            "-g3",
+            "-Wall",
+            "-fPIC",
+            "-no-pie",
+            "-I./include",
+            "-Wextra",
+            "-Wformat",
+            "-Wno-unused-parameter",
+            "-Werror=format-security",
+            "-fPIC",
+            "lib/jacobi.c"
+        ],
+        "directory": "/mnt/c/Users/bisim/git/Jacobi-MPI",
+        "file": "lib/jacobi.c"
+    },
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-std=c99",
+            "-m64",
+            "-g",
+            "-g3",
+            "-Wall",
+            "-fPIC",
+            "-no-pie",
+            "-I./include",
+            "-Wextra",
+            "-Wformat",
+            "-Wno-unused-parameter",
+            "-Werror=format-security",
+            "-fPIC",
+            "lib/matrixutils.c"
+        ],
+        "directory": "/mnt/c/Users/bisim/git/Jacobi-MPI",
+        "file": "lib/matrixutils.c"
+    },
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-std=c99",
+            "-m64",
+            "-g",
+            "-g3",
+            "-Wall",
+            "-fPIC",
+            "-no-pie",
+            "-I./include",
+            "-Wextra",
+            "-Wformat",
+            "-Wno-unused-parameter",
+            "-Werror=format-security",
+            "-I/usr/local/include",
+            "-pthread",
+            "-o",
+            "./jacobi-parallel.o",
+            "jacobi-parallel.c"
+        ],
+        "directory": "/mnt/c/Users/bisim/git/Jacobi-MPI",
+        "file": "jacobi-parallel.c"
+    }
+]
