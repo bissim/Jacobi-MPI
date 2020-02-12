@@ -1,8 +1,9 @@
 /**
  * @file matrixutils.c
+ * @ingroup libraries
  * @author Simone Bisogno (bissim.github.io)
  * @brief Matrix utility functions.
- * @version 0.1.0-beta+20200207
+ * @version 0.1.0-beta+20200212
  * @date 2020-02-07
  * 
  * @copyright Copyright (c) 2020
@@ -15,9 +16,18 @@
 #include "matrixutils.h"
 
 /**
- * Funzione che genera una matrice come array
+ * @brief Generate a matrix as array.
+ * 
+ * Generate a matrix as array.
  */
-void generate_matrix_array(double *v, int rows, int columns, double min, double max, int seed) {
+void generate_matrix_array(
+    double *v,
+    int rows,
+    int columns,
+    double min,
+    double max,
+    int seed
+) {
     srand(seed);
 
     for (int i = 0; i < rows*columns; i++) {
@@ -26,10 +36,18 @@ void generate_matrix_array(double *v, int rows, int columns, double min, double 
 }
 
 /**
- * Funzione che genera una matrice come array
- * Genera matrici diagonali dominanti
+ * @brief Generate a dominant diagonal matrix as array.
+ * 
+ * Generate a dominant diagonal matrix as array.
  */
-void generate_dd_matrix_array(double *v, int rows, int columns, double min, double max, int seed) {
+void generate_dd_matrix_array(
+    double *v,
+    int rows,
+    int columns,
+    double min,
+    double max,
+    int seed
+) {
     int pivot_index = 0;
     int n = (rows + columns) / 2;
     srand(seed);
@@ -46,7 +64,9 @@ void generate_dd_matrix_array(double *v, int rows, int columns, double min, doub
 }
 
 /**
- * Funzione che esegue la stampa di una matrice
+ * @brief Print an array matrix.
+ * 
+ * Print an array matrix.
  */
 void print_matrix_array(double *array, int rows, int columns) {
     if (fmax((float) rows, (float) columns) > 50 || rows * columns > 100) {
@@ -63,7 +83,9 @@ void print_matrix_array(double *array, int rows, int columns) {
 }
 
 /**
- * Funzione che esegue il prodotto matrice vettore
+ * @brief Array matrix-vector dot product.
+ * 
+ * Array matrix-vector dot product.
  */
 void prod_mat_vett(double result[], double *a, int rows, int cols, double v[]) {
     for (int i = 0; i < rows; i++) {
@@ -75,9 +97,16 @@ void prod_mat_vett(double result[], double *a, int rows, int cols, double v[]) {
 }
 
 /**
- * Funzione che esegue la trasposizione di una matrice
+ * @brief Transpose an array matrix.
+ * 
+ * Transpose an array matrix.
  */
-void transpose_matrix_array(double *array, double *transpose, int rows, int columns) {
+void transpose_matrix_array(
+    double *array,
+    double *transpose,
+    int rows,
+    int columns
+) {
     int source_position, destination_position;
     float source;
 

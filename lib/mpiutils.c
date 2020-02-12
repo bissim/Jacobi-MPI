@@ -1,8 +1,9 @@
 /**
  * @file mpiutils.c
+ * @ingroup libraries
  * @author Simone Bisogno (bissim.github.io)
  * @brief MPI utility functions.
- * @version 0.1.0-beta+20200207
+ * @version 0.1.0-beta+20200212
  * @date 2020-02-07
  * 
  * @copyright Copyright (c) 2020
@@ -14,6 +15,11 @@
 #include "mpi.h"
 #include "mpiutils.h"
 
+/**
+ * @brief Default master (processor 0) in MPI cluster.
+ * 
+ * Default master (processor 0) in MPI cluster.
+ */
 extern int MASTER;
 
 /**
