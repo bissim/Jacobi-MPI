@@ -13,7 +13,7 @@ jobs:
     - name: extract-openmpi
       run: tar -xvf ./openmpi-4.0.2.tar.gz
     - name: configure-openmpi
-      run: ./openmpi-4.0.2/configure --prefix="/home/$USER/.openmpi"
+      run: ./openmpi-4.0.2/configure --prefix="/home/${USER}/.openmpi"
     - name: install-openmpi
       run: |
         make -j
@@ -27,8 +27,8 @@ jobs:
         fetch_depth: 1
     - name: set-openmpi-path
       run: |
-        export PATH=$PATH:/home/$USER/.openmpi/bin
-        export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/home/$USER/.openmpi/lib/"
+        export PATH=${PATH}:/home/${USER}/.openmpi/bin/
+        export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/home/${USER}/.openmpi/lib/
         echo ${PATH}
         echo ${LD_LIBRARY_PATH}
     - name: make
