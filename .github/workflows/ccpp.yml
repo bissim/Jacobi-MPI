@@ -9,8 +9,6 @@ jobs:
     - uses: actions/checkout@master
       with:
         fetch_depth: 1
-    - name: update-system
-      run: sudo apt update && sudo apt full-upgrade && sudo apt autoremove
     - name: download-openmpi
       run: wget https://download.open-mpi.org/release/open-mpi/v4.0/openmpi-4.0.2.tar.gz
     - name: extract-openmpi
