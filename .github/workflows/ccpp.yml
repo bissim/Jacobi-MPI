@@ -12,10 +12,6 @@ jobs:
       run: wget https://download.open-mpi.org/release/open-mpi/v4.0/openmpi-4.0.2.tar.gz
     - name: extract-openmpi
       run: tar -xvf ./openmpi-4.0.2.tar.gz
-    - name: WHERE-THE-FUCK-AM-I-NOW
-      run: pwd
-    - name: WHAT-THE-FUCK-IS-HERE
-      run: ls -la
     - name: configure-openmpi
       run: ./openmpi-4.0.2/configure --prefix="/home/$USER/.openmpi"
     - name: install-openmpi
@@ -33,6 +29,8 @@ jobs:
       run: |
         echo "::set-env name=PATH::${PATH}:/home/$USER/.openmpi/bin"
         echo "::set-env name=LD_LIBRARY_PATH::${LD_LIBRARY_PATH}:/home/$USER/.openmpi/lib/"
+        echo ${PATH}
+        echo ${LD_LIBRARY_PATH}
     - name: make
       env:
         TOKEN: ${{ secrets.TOKEN }}
