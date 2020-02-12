@@ -19,7 +19,9 @@ jobs:
     - name: configure-openmpi
       run: ./openmpi-4.0.2/configure --prefix="/home/$USER/.openmpi"
     - name: install-openmpi
-      run: make -j && sudo make install
+      run: |
+        make -j
+        sudo make install
   build:
     runs-on: ubuntu-latest
     needs: [openmpi]
@@ -27,9 +29,11 @@ jobs:
     - uses: actions/checkout@master
       with:
         fetch_depth: 1
+    - name: set-openmpi-path
+      run: |
+        echo "::set-env name=PATH::${PATH}:/home/$USER/.openmpi/bin"
+        echo "::set-env name=LD_LIBRARY_PATH::${LD_LIBRARY_PATH}:/home/$USER/.openmpi/lib/"
     - name: make
       env:
         TOKEN: ${{ secrets.TOKEN }}
-        PATH: $PATH:/home/$USER/.openmpi/bin
-        LD_LIBRARY_PATH: $LD_LIBRARY_PATH:/home/$USER/.openmpi/lib/
       run: make
