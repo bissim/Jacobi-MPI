@@ -1,15 +1,21 @@
 /**
+ * @defgroup runnable Runnable sources
  * @file jacobi-serial.c
+ * @ingroup runnable
  * @author Simone Bisogno (bissim.github.io)
- * @brief Serial version of Jacobi algorithm
- *        to solve linear systems.
- * @version 0.1.0-beta+20200207
+ * @brief Serial version of Jacobi method.
+ * @version 0.1.0-beta+20200212
  * @date 2020-02-03
- * 
+ *
  * @copyright Copyright (c) 2020
- * 
+ *
  */
-#define _XOPEN_SOURCE 700 /**< Use timespec definition from POSIX */
+/**
+ * @brief Use timespec definition from POSIX.
+ * 
+ * Use `timespec` definition from POSIX.
+ */
+#define _XOPEN_SOURCE 700
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -19,28 +25,42 @@
 #include "jacobi.h"
 #include "misc.h"
 
+/**
+ * @brief How many nanoseconds in a second.
+ * 
+ * How many nanoseconds in a second.
+ */
 extern const long NS_IN_S;
+/**
+ * @brief How many milliseconds in a second.
+ */
 extern const int MS_IN_S;
+/**
+ * @brief Minimum double precision floating point number to be generated.
+ */
 extern const double LOWER_BOUND;
+/**
+ * @brief Maximum double precision floating point number to be generated.
+ */
 extern const double UPPER_BOUND;
 
 /**
  * @brief The main function of Jacobi method in serial version.
- * 
- * @param argc[in] Count of command-line parameters
- * @param argv[in] Command-line parameters
+ *
+ * @param argc Count of command-line parameters
+ * @param argv Command-line parameters
  * @return int Return value indicating whether program execution succeded
  */
 int main(int argc, char** argv) {
     // local variables
     /**
      * @brief The order of the matrix associated to linear system
-     * 
+     *
      */
     int n;
     /**
      * @brief The coefficient matrix in linear system
-     * 
+     *
      */
     double *A;
     int num_iterations;
@@ -49,12 +69,12 @@ int main(int argc, char** argv) {
     struct timespec start, stop;
     unsigned char debug = 0;
 
-    printf("Running %s...\n\n", argv[0]);
+    printf("Running %s...\n\n\v", argv[0]);
     fflush(stdout);
 
     // reading dimension and debug flag from command line
     if (argc < 2) {
-        printf("Insufficient number of parameters!\n");
+        printf("\a\aInsufficient number of parameters!\n");
         printf("Usage: %s <matrixOrder> [<debugFlag>]\n\n", argv[0]);
         fflush(stdout);
         exit(EXIT_FAILURE);
@@ -74,7 +94,7 @@ int main(int argc, char** argv) {
     A = malloc(n * n * sizeof *A);
 
     // generate matrix
-    generate_dd_matrix_array(A, n, n, LOWER_BOUND, UPPER_BOUND, SEED);
+    generate_matrix_array(A, n, n, LOWER_BOUND, UPPER_BOUND, SEED);
 
     if (debug) {
         printf("Generated matrix:\n");
@@ -101,7 +121,7 @@ int main(int argc, char** argv) {
     printf("and has an error of %.3e.\n", err);
     fflush(stdout);
     // if (num_iterations == MAX_ITERATIONS) {
-    //     fprintf(stderr, "Solution did not converge!\n");
+    //     fprintf(stderr, "\aSolution did not converge!\n");
     //     exit(EXIT_FAILURE);
     // }
 
@@ -111,6 +131,6 @@ int main(int argc, char** argv) {
     printf("Elapsed time: %f ms.\n", elapsedtime * MS_IN_S);
     fflush(stdout);
 
-    printf("\n%s terminated succesfully!\n", argv[0]);
+    printf("\n\v%s terminated succesfully!\n", argv[0]);
     return EXIT_SUCCESS;
 }
