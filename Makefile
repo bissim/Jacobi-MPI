@@ -47,7 +47,9 @@ $(APPPARNAME): $(LIBDIR)/lib$(APPUTILS).a ./$(APPPARNAME).c
 
 .PHONY: doc
 doc: Doxyfile
-	doxygen Doxyfile
+	-doxygen Doxyfile
+	-moxygen -g -a -o ./doc/jacobi-mpi-%s.md ./doc/xml/
+	#-rm -r doc/xml/
 
 clean:
 	-rm bin/$(APPSERNAME)
