@@ -9,8 +9,18 @@ jobs:
     - uses: actions/checkout@master
       with:
         fetch_depth: 1
-    - name: retrieve-openmpi
-      run: sudo apt install libopenmpi-dev openmpi-bin openmpi-common
+    - name: update-system
+      run: sudo apt update && sudo apt full-upgrade && sudo apt autoremove
+    - name: download-openmpi
+      run: wget https://download.open-mpi.org/release/open-mpi/v4.0/openmpi-4.0.2.tar.gz
+    - name: extract-openmpi
+      run: tar -xvf ./openmpi-4.0.2.tar.gz && cd openmpi-4.0.2
+    - name: configure-openmpi
+      run: ./configure --prefix="/home/$USER/.openmpi"
+    - name: install-openmpi
+      run: make && sudo make install -j
+    - name: export-openmpi
+      run: export PATH="$PATH:/home/$USER/.openmpi/bin" && export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/home/$USER/.openmpi/lib/" && echo export PATH="$PATH:/home/$USER/.openmpi/bin" >> /home/$USER/.bashrc && echo export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/home/$USER/.openmpi/lib/">> /home/$USER/.bashrc
     - name: make
       env:
         TOKEN: ${{ secrets.TOKEN }}
