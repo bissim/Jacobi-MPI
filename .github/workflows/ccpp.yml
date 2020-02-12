@@ -3,12 +3,11 @@ name: C CI
 on: [push]
 
 jobs:
-  build:
+  openmpi:
     runs-on: ubuntu-latest
+    env:
+      TOKEN: ${{ secrets.TOKEN }}
     steps:
-    - uses: actions/checkout@master
-      with:
-        fetch_depth: 1
     - name: download-openmpi
       run: wget https://download.open-mpi.org/release/open-mpi/v4.0/openmpi-4.0.2.tar.gz
     - name: extract-openmpi
@@ -16,9 +15,17 @@ jobs:
     - name: configure-openmpi
       run: ./configure --prefix="/home/$USER/.openmpi"
     - name: install-openmpi
-      run: make && sudo make install -j
-    - name: export-openmpi
-      run: export PATH="$PATH:/home/$USER/.openmpi/bin" && export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/home/$USER/.openmpi/lib/" && echo export PATH="$PATH:/home/$USER/.openmpi/bin" >> /home/$USER/.bashrc && echo export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/home/$USER/.openmpi/lib/">> /home/$USER/.bashrc
+      run: make -j && sudo make install
+  build:
+    runs-on: ubuntu-latest
+    needs: [openmpi]
+    env:
+      PATH: $PATH:/home/$USER/.openmpi/bin
+      LD_LIBRARY_PATH: $LD_LIBRARY_PATH:/home/$USER/.openmpi/lib/
+    steps:
+    - uses: actions/checkout@master
+      with:
+        fetch_depth: 1
     - name: make
       env:
         TOKEN: ${{ secrets.TOKEN }}
