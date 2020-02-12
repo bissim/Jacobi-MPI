@@ -10,7 +10,7 @@ jobs:
       with:
         fetch_depth: 1
     - name: retrieve-openmpi
-      run: apt install openmpi-bin openmpi-common
+      run: sudo apt install openmpi-bin openmpi-common
     - name: make
       env:
         TOKEN: ${{ secrets.TOKEN }}
