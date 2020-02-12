@@ -1,8 +1,9 @@
 /**
  * @file mpiutils.c
+ * @ingroup headers
  * @author Simone Bisogno (bissim.github.io)
  * @brief Header file for MPI utility functions.
- * @version 0.1.0-beta+20200207
+ * @version 0.1.0-beta+20200212
  * @date 2020-02-07
  * 
  * @copyright Copyright (c) 2020
@@ -15,6 +16,11 @@
 extern "C" {
 #endif
 
+/**
+ * @brief Default master (processor 0) in MPI cluster.
+ * 
+ * Default master (processor 0) in MPI cluster.
+ */
 static int MASTER = 0;
 
 void MPI_Printf(int, char *);
