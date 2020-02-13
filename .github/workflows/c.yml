@@ -25,9 +25,5 @@ jobs:
     - uses: actions/checkout@master
       with:
         fetch_depth: 1
-    - name: check-openmpi
-      run: |
-        which mpicc
-        which mpiexec
     - name: make
       run: make
