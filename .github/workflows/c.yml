@@ -18,6 +18,7 @@ jobs:
       run: |
         make -j
         sudo make install
+        sudo ldconfig
     - uses: actions/checkout@master
       with:
         fetch_depth: 1
