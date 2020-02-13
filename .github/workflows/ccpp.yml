@@ -8,20 +8,16 @@ jobs:
     env:
       OPENMPI_VERSION: 4.0.2
     steps:
-    - name: download-openmpi
+    - name: download
       run: wget https://download.open-mpi.org/release/open-mpi/v4.0/openmpi-${OPENMPI_VERSION}.tar.gz
-    - name: extract-openmpi
+    - name: extract
       run: tar -xvf ./openmpi-${OPENMPI_VERSION}.tar.gz
-    - name: configure-openmpi
-      run: ./openmpi-${OPENMPI_VERSION}/configure --prefix="/home/${USER}/.openmpi"
-    - name: install-openmpi
+    - name: configure
+      run: ./openmpi-${OPENMPI_VERSION}/configure --prefix="/usr/local"
+    - name: install
       run: |
         make -j
         sudo make install
-    - name: set-openmpi-envs
-      run: |
-        echo "::add-path::/home/${USER}/.openmpi/bin"
-        echo "::set-env name=LD_LIBRARY_PATH::/home/${USER}/.openmpi/lib/"
   build:
     runs-on: ubuntu-latest
     needs: [openmpi]
@@ -29,10 +25,8 @@ jobs:
     - uses: actions/checkout@master
       with:
         fetch_depth: 1
-    - name: see-openmpi-envs
+    - name: check-openmpi
       run: |
-        echo ${PATH}
-        echo ${LD_LIBRARY_PATH}
         which mpicc
         which mpiexec
     - name: make
