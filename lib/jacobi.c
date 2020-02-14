@@ -81,8 +81,13 @@ void jacobi_iteration(double *A, double *A_prime, int rows, int columns) {
  * @param a Pointer to a matrix (as array) 
  * @param b Pointer to a matrix (as array)
  */
-void swap_pointers(double **a, double **b) {
-    double *temp;/**< Temporary pointer for swap */
+void swap_pointers(void **a, void **b) {
+    /**
+     * @brief Temporary pointer for swap
+     * 
+     * Temporary pointer for swap
+     */
+    void *temp;
 
     temp = *a;
     *a = *b;

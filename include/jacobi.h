@@ -28,7 +28,7 @@ static const double CONVERGENCE_THRESHOLD = 1E-2; // 0.01
 
 int jacobi(double *, int, int, double *);
 void jacobi_iteration(double *, double *, int, int);
-void swap_pointers(double **, double **);
+void swap_pointers(void **, void **);
 void replace_elements(double *, double *, int, int);
 double convergence_check_g(double *, double *, int, int);
 double convergence_check(double *, double *, int, int);
