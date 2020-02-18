@@ -4,10 +4,12 @@ CC = clang
 CFLAGS = \
 		-std=c99 \
 		-m64 \
+		-O4 \
+		-fopenmp \
 		-g \
 		-g3 \
-		-Wall \
 		-I$(INCLUDESDIR) \
+		-Wall \
 		-Wextra \
 		-Wformat \
 		-Wno-unused-parameter \
@@ -41,9 +43,7 @@ $(APPSERNAME): $(LIBDIR)/lib$(APPUTILS).a ./$(APPSERNAME).c
 
 .PHONY: $(APPPARNAME)
 $(APPPARNAME): $(LIBDIR)/lib$(APPUTILS).a ./$(APPPARNAME).c
-	mpicc $(CFLAGS) -c ./$(APPPARNAME).c -o ./$(APPPARNAME).o
-	mpicc $(CFLAGS) -no-pie ./$(APPPARNAME).o $(LDFLAGS) -L$(LIBDIR) -l$(APPUTILS) -o ./bin/$(APPPARNAME)
-	rm ./$(APPPARNAME).o
+	mpicc $(CFLAGS) -no-pie ./$(APPPARNAME).c $(LDFLAGS) -L$(LIBDIR) -l$(APPUTILS) -o ./bin/$(APPPARNAME)
 
 .PHONY: doc
 doc: Doxyfile

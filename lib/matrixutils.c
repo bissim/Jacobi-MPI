@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <omp.h>
 
 #include "matrixutils.h"
 
@@ -30,8 +31,38 @@ void generate_matrix_array(
 ) {
     srand(seed);
 
-    for (int i = 0; i < rows*columns; i++) {
-        v[i] = min + (rand() / (RAND_MAX / (max - min)));
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < columns; j++) {
+            v[i*rows + j] = min + (rand() / (RAND_MAX / (max - min)));
+        }
+    }
+}
+
+/**
+ * @brief Generate a matrix as array.
+ * 
+ * Generate a matrix as array.
+ */
+void generate_matrix_array_par(
+    double *v,
+    int rows,
+    int columns,
+    double min,
+    double max,
+    int seed
+) {
+    srand(seed);
+
+    int nthreads = omp_get_max_threads();
+    int chunk_size = (rows * columns) / nthreads;
+
+    #pragma omp parallel for \
+            shared(v) \
+            schedule(static, chunk_size)
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < columns; j++) {
+            v[i*rows + j] = min + (rand() / (RAND_MAX / (max - min)));
+        }
     }
 }
 
