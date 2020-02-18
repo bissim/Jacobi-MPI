@@ -9,7 +9,12 @@
  * @copyright Copyright (c) 2020
  *
  */
-#define _XOPEN_SOURCE 700 /**< Use timespec definition from POSIX */
+/**
+ * @brief Use timespec definition from POSIX.
+ * 
+ * Use `timespec` definition from POSIX.
+ */
+#define _XOPEN_SOURCE 700
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -191,7 +196,7 @@ int main (int argc, char **argv) {
         printf("[P%d] Generating matrix...\n", me);
         printf("\n");
         fflush(stdout);
-        generate_dd_matrix_array(A, n, n, LOWER_BOUND, UPPER_BOUND, SEED);
+        generate_matrix_array(A, n, n, LOWER_BOUND, UPPER_BOUND, SEED);
 
         if (debug) {
             printf("[P%d] Generated matrix:\n", me);
@@ -260,7 +265,6 @@ int main (int argc, char **argv) {
         fflush(stdout);
     }
 
-    // distribute matrix to processes
     if (debug) {
         printf(
             "[P%d] I will take %d rows\n",
@@ -268,22 +272,6 @@ int main (int argc, char **argv) {
             local_g_rows
         );
         printf("\n");
-        fflush(stdout);
-    }
-    // MPI_Scatterv(
-    //     A, sendcounts, displs, MPI_DOUBLE,
-    //     local_A, sendcounts[me], MPI_DOUBLE,
-    //     MASTER, COMM
-    // );
-
-    // if (debug) {
-    //     printf("[P%d] Received local matrix:\n", me);
-    //     print_matrix_array(local_A, local_rows, n);
-    //     printf("\n");
-    //     fflush(stdout);
-    // }
-
-    if (debug) {
         printf(
             "[P%d] Convergence threshold is %.3e\n",
             me,
@@ -291,11 +279,12 @@ int main (int argc, char **argv) {
         );
         fflush(stdout);
     }
+
     // apply Jacobi method
     local_A = malloc(local_rows * n * sizeof *local_A);
     local_A_g = malloc(sendcounts[me] * sizeof *local_A_g);
-    local_A_prime = malloc(local_rows * n * sizeof *local_A_prime);
-    // local_A_g_prime = malloc(sendcounts[me] * sizeof *local_A_g_prime);
+    // local_A_prime = calloc(local_rows * n, sizeof *local_A_prime);
+    local_A_prime = calloc(sendcounts[me], sizeof *local_A_prime);
     num_iterations = 0;
     t_start = MPI_Wtime();
     do {
@@ -313,29 +302,15 @@ int main (int argc, char **argv) {
             fflush(stdout);
         }
 
-        // first apply a single iteration
+        // apply a single iteration
         jacobi_iteration(local_A_g, local_A_prime, local_g_rows, n);
         num_iterations++;
-        // unghost local_A_g
-        for (int i = 0; i < local_rows * n; i++) {
-            g_index = (me == MASTER)? i: i + n;
-            local_A[i] = local_A_g[g_index];
-            // local_A_prime[i] = local_A_g_prime[g_index];
-        }
-        if (debug) {
-            printf("[P%d] Local matrix unghosted:\n", me);
-            print_matrix_array(local_A, local_rows, n);
-            printf("\n");
-            printf("[P%d] Local prime matrix:\n", me);
-            print_matrix_array(local_A_prime, local_rows, n);
-            printf("\n");
-            fflush(stdout);
-        }
+
         // check for convergence test before reiterating
         local_diffnorm = convergence_check(
-            local_A,
+            local_A_g,
             local_A_prime,
-            local_rows,
+            local_g_rows,
             n
         );
         if (debug) {
@@ -365,15 +340,34 @@ int main (int argc, char **argv) {
             fflush(stdout);
         }
 
+        if (debug) {
+            printf("[P%d] Local prime matrix:\n", me);
+            print_matrix_array(local_A_prime, local_g_rows, n);
+            printf("\n");
+            fflush(stdout);
+        }
+
         // swap matrices
         // swap_pointers(&local_A, &local_A_prime);
-        replace_elements(local_A, local_A_prime, local_rows, n);
+        replace_elements(local_A_g, local_A_prime, local_g_rows, n);
 
-        // if (debug && me == MASTER) {
-        //     printf("Press ENTER to continue...\n");
-        //     getchar();
-        //     fflush(stdout);
-        // }
+        // unghost local_A_g
+        g_index = (me == MASTER)? 0: n; // master includes first row
+        for (int i = g_index; i < local_rows * n; i++) {
+            local_A[i - g_index] = local_A_g[i];
+        }
+        if (debug) {
+            printf("[P%d] Local matrix unghosted:\n", me);
+            print_matrix_array(local_A, local_rows, n);
+            printf("\n");
+            fflush(stdout);
+        }
+
+        if (debug && me == MASTER) {
+            printf("Press ENTER to continue...\n");
+            getchar();
+            fflush(stdout);
+        }
 
         // at last, recollect submatrices
         MPI_Gatherv(
