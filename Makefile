@@ -5,7 +5,6 @@ CFLAGS = \
 		-std=c99 \
 		-m64 \
 		-O4 \
-		-fopenmp \
 		-g \
 		-g3 \
 		-I$(INCLUDESDIR) \

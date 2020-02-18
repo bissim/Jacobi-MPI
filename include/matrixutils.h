@@ -23,12 +23,6 @@ extern "C" {
  */
 void generate_matrix_array(double *, int, int, double, double, int);
 /**
- * @brief Generate a matrix as array.
- * 
- * Generate a matrix as array.
- */
-void generate_matrix_array_par(double *, int, int, double, double, int);
-/**
  * @brief Generate a dominant diagonal matrix as array.
  * 
  * Generate a dominant diagonal matrix as array.

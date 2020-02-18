@@ -15,7 +15,6 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
-#include <omp.h>
 
 #include "matrixutils.h"
 #include "jacobi.h"
@@ -104,7 +103,6 @@ void swap_pointers(void **a, void **b) {
  * @param columns Number of input matrix columns
  */
 void replace_elements(double *a, double *b, int rows, int columns) {
-    #pragma omp parallel for
     for (int i = 1; i < rows - 1; i++) {
         for (int j = 1; j < columns - 1; j++) {
             a[i * rows + j] = b[i * rows + j];
@@ -124,7 +122,6 @@ void replace_elements(double *a, double *b, int rows, int columns) {
 double convergence_check_g(double *x, double *x_prime, int rows, int columns) {
     double diff = 0.0;
 
-    #pragma omp parallel for reduction(+: diff)
     for (int i = 1; i < rows - 1; i++) {
         for (int j = 1; j < columns - 1; j++) {
             diff += (x_prime[i*rows+j] - x[i*rows+j]) *
@@ -147,7 +144,6 @@ double convergence_check_g(double *x, double *x_prime, int rows, int columns) {
 double convergence_check(double *x, double *x_prime, int rows, int columns) {
     double diff = 0.0;
 
-    #pragma omp parallel for reduction(+: diff)
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < columns; j++) {
             diff += (x_prime[i*rows+j] - x[i*rows+j]) *
