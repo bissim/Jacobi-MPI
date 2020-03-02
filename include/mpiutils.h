@@ -3,7 +3,7 @@
  * @ingroup headers
  * @author Simone Bisogno (bissim.github.io)
  * @brief Header file for MPI utility functions.
- * @version 0.1.0-beta+20200212
+ * @version 0.1.0-beta+20200302
  * @date 2020-02-07
  * 
  * @copyright Copyright (c) 2020
