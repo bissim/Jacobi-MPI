@@ -22,6 +22,12 @@ extern "C" {
  * Default master (processor 0) in MPI cluster.
  */
 static int MASTER = 0;
+/**
+ * @brief Default tag for MPI 1-to-1 communications.
+ * 
+ * Default tag for MPI 1-to-1 communications.
+ */
+static int TAG = 1;
 
 void MPI_Printf(int, char *);
 void MPI_Free(int, void *);

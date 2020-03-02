@@ -21,6 +21,12 @@
  * Default master (processor 0) in MPI cluster.
  */
 extern int MASTER;
+/**
+ * @brief Default tag for MPI 1-to-1 communications.
+ * 
+ * Default tag for MPI 1-to-1 communications.
+ */
+extern int TAG;
 
 /**
  * Funzione che stampa un messaggio con il
