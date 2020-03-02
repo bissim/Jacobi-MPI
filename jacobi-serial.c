@@ -88,6 +88,7 @@ int main(int argc, char** argv) {
         debug = (unsigned char) atoi(argv[2]);
     }
     printf("Matrix dimension: %dx%d (%d elements)\n", n, n, n*n);
+    printf("\n");
     fflush(stdout);
 
     // allocate memory for matrix and vectors
