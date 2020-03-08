@@ -10,19 +10,20 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       OPENMPI_VERSION: 4.0.2
     steps:
-    - name: download
+    - name: Download OpenMPI
       run: wget https://download.open-mpi.org/release/open-mpi/v4.0/openmpi-${OPENMPI_VERSION}.tar.gz
-    - name: extract
+    - name: Extract OpenMPI
       run: tar -xvf ./openmpi-${OPENMPI_VERSION}.tar.gz
-    - name: configure
+    - name: Configure OpenMPI
       run: ./openmpi-${OPENMPI_VERSION}/configure --prefix="/usr/local"
-    - name: install
+    - name: Build and install OpenMPI
       run: |
         make -j
         sudo make install
         sudo ldconfig
-    - uses: actions/checkout@master
-      with:
-        fetch_depth: 1
-    - name: make
-      run: make
+    - name: Checkout code
+      uses: actions/checkout@master
+    - name: Build Jacobi MPI
+      run: |
+        echo "Building Jacobi MPI, version $(cat VERSION)"
+        make

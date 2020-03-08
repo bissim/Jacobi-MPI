@@ -26,7 +26,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@master
       - name: Build project
-        run: make
+        run: |
+          echo "Building Jacobi MPI, version $(cat VERSION)"
+          make
       - name: Pack project
         run: |
           tar -czvf jacobi-mpi.tar.gz ./bin/jacobi-*
