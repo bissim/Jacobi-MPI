@@ -23,8 +23,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@master
       - name: Build project
+        run: make
+      - name: Pack project
         run: |
-          zip --junk-paths jacobi-mpi ./bin/jacobi-*
+          tar -czvf jacobi-mpi.tar.gz ./bin/jacobi-*
+          tar -tzvf jacobi-mpi.tar.gz
       - name: Create Release
         id: create_release
         uses: actions/create-release@latest
@@ -44,6 +47,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./jacobi-mpi.zip
-          asset_name: jacobi-mpi.zip
-          asset_content_type: application/zip
+          asset_path: ./jacobi-mpi.tar.gz
+          asset_name: jacobi-mpi.tar.gz
+          asset_content_type: application/gzip
