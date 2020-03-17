@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
 #include <time.h>
 
 #include "matrixutils.h"
@@ -68,24 +69,37 @@ int main(int argc, char** argv) {
     double elapsedtime;
     struct timespec start, stop;
     unsigned char debug = 0;
+    char *output_file;
+    FILE *results;
+    // int p[2];
 
     printf("Running %s...\n\n\v", argv[0]);
     fflush(stdout);
 
+    // check for pipe availability
+    // if (pipe(p) < 0) {
+    //     fprintf(stderr, "Cannot open pipe!");
+    //     return EXIT_FAILURE;
+    // }
+
     // reading dimension and debug flag from command line
-    if (argc < 2) {
+    if (argc < 3) {
         printf("\a\aInsufficient number of parameters!\n");
-        printf("Usage: %s <matrixOrder> [<debugFlag>]\n\n", argv[0]);
+        printf("Usage: %s <matrixOrder> <outputFileName> [<debugFlag>]\n\n", argv[0]);
         fflush(stdout);
         exit(EXIT_FAILURE);
     }
-    else if (argc == 2) {
+    else if (argc == 3) {
         n = atoi(argv[1]);
+        output_file = malloc ((strlen(argv[2]) + 1) * sizeof output_file);
+        sprintf(output_file, "%s", argv[2]);
         debug = 0;
     }
     else {
         n = atoi(argv[1]);
-        debug = (unsigned char) atoi(argv[2]);
+        output_file = malloc ((strlen(argv[2]) + 1) * sizeof output_file);
+        sprintf(output_file, "%s", argv[2]);
+        debug = (unsigned char) atoi(argv[3]);
     }
     printf("Matrix dimension: %dx%d (%d elements)\n", n, n, n*n);
     printf("\n");
@@ -129,8 +143,18 @@ int main(int argc, char** argv) {
     elapsedtime = (stop.tv_sec - start.tv_sec) +
         (stop.tv_nsec - start.tv_nsec) /
         (double) NS_IN_S;
+    // setenv("JACOBI_TIME", elapsedtime, 1); // does not work
+    // write(p[1], elapsedtime, sizeof elapsedtime);
     printf("Elapsed time: %f ms.\n", elapsedtime * MS_IN_S);
+    printf("\n");
     fflush(stdout);
+
+    printf("Writing result in %s\n", output_file);
+    fflush(stdout);
+    results = fopen(output_file, "a");
+    fprintf(results, "%d,%f\n", n, elapsedtime);
+    fflush(results);
+    fclose(results);
 
     printf("\n\v%s terminated succesfully!\n", argv[0]);
     return EXIT_SUCCESS;

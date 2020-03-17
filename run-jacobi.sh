@@ -1,13 +1,20 @@
 #!/bin/bash
 
+# strict mode
+set -euo pipefail
+IFS=$'\n\t'
+
 #
 # check for input parameters
 #
-TIME=$(date "+%Y.%m.%d-%H.%M.%S")
+TIME=$(date "+%Y.%m.%d-%H:%M:%S")
 VERSION=$(cat ./VERSION)
 ITERATIONS=6
+MEASUREITERATIONS=3
 SUCCESS=0
-while [[ "$1" =~ ^- && ! "$1" == "--" ]]; do
+TYPE=""
+DEBUG=0
+while [[ "${1-0}" =~ ^- && ! "${1-0}" == "--" ]]; do
     case $1 in
         ( -v | --version )
             echo $VERSION
@@ -69,7 +76,7 @@ while [[ "$1" =~ ^- && ! "$1" == "--" ]]; do
     esac;
     shift;
 done
-if [[ "$1" == '--' ]]; then shift; fi
+if [[ "${1-0}" == '--' ]]; then shift; fi
 if (( $SUCCESS == 0 )); then
     echo "No parameter specified!"
     exit
@@ -81,39 +88,82 @@ fi
 
 BINARY=jacobi-$TYPE
 echo "Running $BINARY $ITERATIONS times over a $DIMENSION x $DIMENSION initial matrix"
-if [[ $DEBUG ]]; then
+if (( $DEBUG == 0 )); then
     echo "Debug option enabled"
 fi
+echo
 
 #
 # compile dependencies and chosen executable
+# if binary file doesn't already exist
 #
 echo "Building $BINARY..."
+if [[ ! -e ./bin/$BINARY ]]; then
+    make jacobiutils
+    make $BINARY
+else
+    echo "$BINARY has already been built!"
+fi
 echo
-make jacobiutils
-make $BINARY
+
+#
+# define utility functions
+#
+reduce() {
+    local filename=$1
+    local dimension=$2
+    local values=(`grep "^$dimension," $filename | cut -d "," -f 2 | sort`)
+
+    # put lower value in 2nd place
+    # and higher one in 3rd place
+    local temp=${values[1]}
+    values[1]=${values[0]}
+    values[0]=$temp
+
+    # create new file line
+    local line=$dimension,${values[@]}
+    #echo $line
+
+    # replace lines with DIMENSION
+    # and make them unique
+    echo "$(sed "s/^$dimension,.*/$line/" $filename | uniq)" > $filename
+    echo "$(tr " " "," < $filename)" > $filename
+}
 
 #
 # run chosen executable ITERATIONS times
 #
-RESULT=""
-OUTPUT=$BINARY.log
+RESULTFILE="./data/results-$TYPE.csv"
+RESULTPLOT="results.plt"
+OUTPUT=./log/$BINARY.log
 NPROC=`nproc`
-echo " Output will be saved in $OUTPUT"
+echo "Output will be saved in $OUTPUT"
 #echo "[`date "+%Y.%m.%d-%H.%M.%S"`] $TYPE esecution" > $OUTPUT
-while (( $ITERATIONS >= 0 )); do
+echo "\"Size\",\"Time\"" > $RESULTFILE
+for (( I = 0; I < $ITERATIONS; I++ )); do
     echo "$DIMENSION x $DIMENSION matrix"
     if [[ $TYPE == "serial" ]]; then
-        ./bin/$BINARY $DIMENSION $DEBUG >> $OUTPUT
+        for (( J = 0; J < $MEASUREITERATIONS; J++ )); do
+            # stuff
+            ./bin/$BINARY $DIMENSION $RESULTFILE $DEBUG >> $OUTPUT
+        done
     elif [[ $TYPE == "parallel" ]]; then
         echo "Running in parallel over $NPROC processors"
+        # TODO weak and strong scalability graph generation coming soon
         mpiexec -np $NPROC --use-hwthread-cpus ./bin/$BINARY $DIMENSION $DEBUG >> $OUTPUT
     fi
+    reduce $RESULTFILE $DIMENSION
     let DIMENSION=$DIMENSION*2
-    let ITERATIONS=$ITERATIONS-1
     echo "-----" >> $OUTPUT
     echo "" >> $OUTPUT
 done
+
+GPTLOG=./log/gpt-$BINARY.log
+echo $TIME >> $GPTLOG
+echo
+echo "Generating execution time graph..."
+gnuplot -c $RESULTPLOT $RESULTFILE $TYPE 2>> $GPTLOG
+echo "-----" >> $GPTLOG
 
 echo
 echo "End of tests for $BINARY"
