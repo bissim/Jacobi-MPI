@@ -139,7 +139,7 @@ OUTPUT=./log/$BINARY.log
 NPROC=`nproc`
 echo "Output will be saved in $OUTPUT"
 #echo "[`date "+%Y.%m.%d-%H.%M.%S"`] $TYPE esecution" > $OUTPUT
-echo "\"Size\",\"Time\"" > $RESULTFILE
+echo "\"Size\",\"Time\",\"TimeMin\",\"TimeMax\"" > $RESULTFILE
 for (( I = 0; I < $ITERATIONS; I++ )); do
     echo "$DIMENSION x $DIMENSION matrix"
     if [[ $TYPE == "serial" ]]; then
