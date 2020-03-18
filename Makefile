@@ -15,6 +15,7 @@ CFLAGS = \
 		-Werror=format-security
 LDFLAGS = -lm
 LIBDIR = ./lib
+SRCDIR = ./src
 INCLUDESDIR = ./include
 APPSERNAME = jacobi-serial
 APPPARNAME = jacobi-parallel
@@ -37,12 +38,12 @@ $(APPUTILS): \
 	rm $(LIBDIR)/*.o
 
 .PHONY: $(APPSERNAME)
-$(APPSERNAME): $(LIBDIR)/lib$(APPUTILS).a ./$(APPSERNAME).c
-	$(CC) $(CFLAGS) ./$(APPSERNAME).c $(LDFLAGS) -L$(LIBDIR) -l$(APPUTILS) -o ./bin/$(APPSERNAME)
+$(APPSERNAME): $(LIBDIR)/lib$(APPUTILS).a $(SRCDIR)/$(APPSERNAME).c
+	$(CC) $(CFLAGS) $(SRCDIR)/$(APPSERNAME).c $(LDFLAGS) -L$(LIBDIR) -l$(APPUTILS) -o ./bin/$(APPSERNAME)
 
 .PHONY: $(APPPARNAME)
-$(APPPARNAME): $(LIBDIR)/lib$(APPUTILS).a ./$(APPPARNAME).c
-	mpicc $(CFLAGS) -no-pie ./$(APPPARNAME).c $(LDFLAGS) -L$(LIBDIR) -l$(APPUTILS) -o ./bin/$(APPPARNAME)
+$(APPPARNAME): $(LIBDIR)/lib$(APPUTILS).a $(SRCDIR)/$(APPPARNAME).c
+	mpicc $(CFLAGS) -no-pie $(SRCDIR)/$(APPPARNAME).c $(LDFLAGS) -L$(LIBDIR) -l$(APPUTILS) -o ./bin/$(APPPARNAME)
 
 .PHONY: doc
 doc: Doxyfile
@@ -51,6 +52,7 @@ doc: Doxyfile
 	#-rm -r doc/xml/
 
 clean:
-	-rm bin/$(APPSERNAME)
-	-rm bin/$(APPPARNAME)
-	-rm -r doc/**
+	-rm ./bin/$(APPSERNAME)
+	-rm ./bin/$(APPPARNAME)
+	-rm -r ./doc/xml/
+	-rm -r ./doc/*.md

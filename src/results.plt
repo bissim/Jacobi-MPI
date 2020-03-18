@@ -69,7 +69,8 @@ plot results ls 2, \
 
 # save plot to image
 plotImageName = "./doc/img/results-" . type . ".png"
-print "Saving plot to " . plotImageName . "..."
+print "Saving plot to " . plotImageName . " as a " . sprintf("%d", xdim) . "x" \
+    . sprintf("%d", ydim) . " image..."
 set terminal pngcairo nocrop enhanced font "Lato-Medium,8" size xdim,ydim
 set output plotImageName
 set size ratio ar

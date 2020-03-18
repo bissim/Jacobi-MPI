@@ -134,7 +134,7 @@ reduce() {
 # run chosen executable ITERATIONS times
 #
 RESULTFILE="./data/results-$TYPE.csv"
-RESULTPLOT="results.plt"
+RESULTPLOT="./src/results.plt"
 OUTPUT=./log/$BINARY.log
 NPROC=`nproc`
 echo "Output will be saved in $OUTPUT"
