@@ -104,12 +104,18 @@ echo
 # compile dependencies and chosen executable
 # if binary file doesn't already exist
 #
-echo "Building $BINARY..."
 if [[ ! -e ./bin/$BINARY ]]; then
+    echo "Building $BINARY..."
+    if [[ ! -e ./bin ]]; then
+        echo "Creating bin/ directory..."
+        mkdir bin
+    else
+        echo "bin/ directory already exists"
+    fi
     make jacobiutils
     make $BINARY
 else
-    echo "$BINARY has already been built!"
+    echo "$BINARY has already been built"
 fi
 echo
 
@@ -152,16 +158,26 @@ printresults() {
 # run chosen executable ITERATIONS times
 #
 RESULTFILE="./data/results-$TYPE.csv"
+if [[ ! -e ./log ]]; then
+    echo "Creating log/ directory..."
+    mkdir log
+else
+    echo "log/ directory already exists"
+fi
 OUTPUT=./log/$BINARY.log
 NPROC=`nproc`
 echo "Output will be saved in $OUTPUT"
-#echo "[`date "+%Y.%m.%d-%H.%M.%S"`] $TYPE esecution" > $OUTPUT
+echo
+echo -e "\n\t#####\n" >> $OUTPUT
+echo "[$TIME] Running Jacobi MPI $VERSION, $TYPE esecution" >> $OUTPUT
 echo "\"Size\",\"Time\",\"TimeMin\",\"TimeMax\"" > $RESULTFILE
 for (( I = 0; I < $ITERATIONS; I++ )); do
     echo "$DIMENSION x $DIMENSION matrix"
+    echo -e "\tBEGIN ITERATION $I FOR $DIMENSION x $DIMENSION MATRIX\n" >> $OUTPUT
     if [[ $TYPE == "serial" ]]; then
         for (( J = 0; J < $MEASUREITERATIONS; J++ )); do
             # stuff
+            echo -e "\n\tEXECUTION $J\n" >> $OUTPUT
             ./bin/$BINARY $DIMENSION $RESULTFILE $DEBUG >> $OUTPUT
         done
     elif [[ $TYPE == "parallel" ]]; then
@@ -171,9 +187,9 @@ for (( I = 0; I < $ITERATIONS; I++ )); do
     fi
     reduce $RESULTFILE $DIMENSION
     let DIMENSION=$DIMENSION*2
-    echo "-----" >> $OUTPUT
-    echo "" >> $OUTPUT
+    echo -e "\n\t-----\n" >> $OUTPUT
 done
+echo -e "\n\t#####" >> $OUTPUT
 
 #
 # print or plot results
@@ -181,7 +197,7 @@ done
 if (( $PRINT == 1 )); then
     # print results
     echo
-    echo "$RESULTFILE"
+    echo "Results saved in $RESULTFILE:"
     printresults $RESULTFILE
 else
     # plot execution times
@@ -193,7 +209,7 @@ else
     gnuplot -c $RESULTPLOT $RESULTFILE $TYPE 2>> $GPTLOG
     echo "-----" >> $GPTLOG
     echo "Plot saved to $RESULTPLOT"
-
-    echo
-    echo "End of tests for $BINARY"
 fi
+
+echo
+echo "End of tests for $BINARY"
