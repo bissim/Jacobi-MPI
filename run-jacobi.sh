@@ -14,6 +14,7 @@ MEASUREITERATIONS=3
 SUCCESS=0
 TYPE=""
 DEBUG=0
+PRINT=0
 while [[ "${1-0}" =~ ^- && ! "${1-0}" == "--" ]]; do
     case $1 in
         ( -v | --version )
@@ -51,6 +52,11 @@ while [[ "${1-0}" =~ ^- && ! "${1-0}" == "--" ]]; do
             #echo "Debug option enabled"
             SUCCESS=1
             ;;
+        ( -R | --printresults )
+            PRINT=1
+            #echo "Print results option enabled"
+            SUCCESS=1
+            ;;
         ( -h | --help)
             echo "Jacobi MPI $VERSION"
             echo
@@ -65,6 +71,7 @@ while [[ "${1-0}" =~ ^- && ! "${1-0}" == "--" ]]; do
             echo "--parallel or -p: run parallel Jacobi"
             echo "--dimension or -d: matrix dimension at first execution"
             echo "--debug or -D: print debug information during execution"
+            echo "--printresults or -R: print results from execution on stdout instead of plotting"
             echo "--version or -v: print Jacobi MPI version"
             echo "--help or -h: print this program guide"
             exit
@@ -88,7 +95,7 @@ fi
 
 BINARY=jacobi-$TYPE
 echo "Running $BINARY $ITERATIONS times over a $DIMENSION x $DIMENSION initial matrix"
-if (( $DEBUG == 0 )); then
+if (( $DEBUG == 1 )); then
     echo "Debug option enabled"
 fi
 echo
@@ -112,6 +119,10 @@ echo
 reduce() {
     local filename=$1
     local dimension=$2
+
+    # extract from CSV file the line with $dimension as first value
+    # then cut away comma-separated columns from second one
+    # at last, sort values from lower to upper
     local values=(`grep "^$dimension," $filename | cut -d "," -f 2 | sort`)
 
     # put lower value in 2nd place
@@ -130,11 +141,17 @@ reduce() {
     echo "$(tr " " "," < $filename)" > $filename
 }
 
+printresults() {
+    local results=$1
+
+    # print results to stdout
+    echo "$(tr "," "\t" < $results)"
+}
+
 #
 # run chosen executable ITERATIONS times
 #
 RESULTFILE="./data/results-$TYPE.csv"
-RESULTPLOT="./src/results.plt"
 OUTPUT=./log/$BINARY.log
 NPROC=`nproc`
 echo "Output will be saved in $OUTPUT"
@@ -158,12 +175,25 @@ for (( I = 0; I < $ITERATIONS; I++ )); do
     echo "" >> $OUTPUT
 done
 
-GPTLOG=./log/gpt-$BINARY.log
-echo $TIME >> $GPTLOG
-echo
-echo "Generating execution time graph..."
-gnuplot -c $RESULTPLOT $RESULTFILE $TYPE 2>> $GPTLOG
-echo "-----" >> $GPTLOG
+#
+# print or plot results
+#
+if (( $PRINT == 1 )); then
+    # print results
+    echo
+    echo "$RESULTFILE"
+    printresults $RESULTFILE
+else
+    # plot execution times
+    RESULTPLOT="./src/results.plt"
+    GPTLOG=./log/gpt-$BINARY.log
+    echo $TIME >> $GPTLOG
+    echo
+    echo "Generating execution time graph..."
+    gnuplot -c $RESULTPLOT $RESULTFILE $TYPE 2>> $GPTLOG
+    echo "-----" >> $GPTLOG
+    echo "Plot saved to $RESULTPLOT"
 
-echo
-echo "End of tests for $BINARY"
+    echo
+    echo "End of tests for $BINARY"
+fi

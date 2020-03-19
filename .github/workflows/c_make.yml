@@ -27,3 +27,8 @@ jobs:
       run: |
         echo "Building Jacobi MPI, version $(cat VERSION)"
         make
+    - name: Run Jacobi serial
+      run: |
+        echo "Test run for Jacobi serial"
+        chmod +x ./run-jacobi.sh
+        ./run-jacobi.sh -s -d 32 -R
