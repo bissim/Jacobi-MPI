@@ -3,7 +3,7 @@
  * @ingroup runnable
  * @author Simone Bisogno (bissim.github.io)
  * @brief Parallel version of Jacobi method.
- * @version 0.1.0-beta+20200316
+ * @version 0.1.0-beta+20200327
  * @date 2020-02-04
  *
  * @copyright Copyright (c) 2020
