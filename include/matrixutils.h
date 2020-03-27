@@ -35,6 +35,12 @@ void generate_dd_matrix_array(double *, int, int, double, double, int);
  */
 void print_matrix_array(double *, int, int);
 /**
+ * @brief Copy existing array matrix into another one.
+ * 
+ * Copy existing array matrix into another one.
+ */
+void copy_matrix_array(double *, double *, int, int);
+/**
  * @brief Array matrix-vector dot product.
  * 
  * Array matrix-vector dot product.

@@ -85,6 +85,19 @@ void print_matrix_array(double *array, int rows, int columns) {
 }
 
 /**
+ * @brief Copy existing array matrix into another one.
+ * 
+ * Copy existing array matrix into another one.
+ */
+void copy_matrix_array(double *array, double *copy, int rows, int columns) {
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < columns; j++) {
+            copy[i * columns + j] = array[i * columns + j];
+        }
+    }
+}
+
+/**
  * @brief Array matrix-vector dot product.
  * 
  * Array matrix-vector dot product.
