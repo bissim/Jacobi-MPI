@@ -30,6 +30,7 @@ int jacobi(double *, int, int, double *);
 void jacobi_iteration(double *, double *, int, int);
 void swap_pointers(void **, void **);
 void replace_elements(double *, double *, int, int);
+void replace_partial(double *, double *, int, int, int, int);
 double convergence_check_g(double *, double *, int, int);
 double convergence_check(double *, double *, int, int);
 

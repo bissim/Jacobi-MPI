@@ -14,10 +14,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
 #include <time.h>
 
 #include "matrixutils.h"
 #include "jacobi.h"
+#include "mpiutils.h"
 
 extern const short MAX_ITERATIONS; /**< Maximum number of iterations allowed */
 extern const double CONVERGENCE_THRESHOLD; /**< Error threshold */
@@ -37,7 +39,8 @@ int jacobi(double *A, int rows, int columns, double *eps) {
     double *A_prime;
 
     itr = 0;
-    A_prime = calloc(rows * columns, sizeof *A_prime);
+    A_prime = malloc(rows * columns * sizeof *A_prime);
+    memset(A_prime, 0, rows * columns);
     do {
         jacobi_iteration(A, A_prime, rows, columns);
         itr++;
@@ -47,6 +50,12 @@ int jacobi(double *A, int rows, int columns, double *eps) {
         // swap matrices
         // swap_pointers(&A, &A_prime);
         replace_elements(A, A_prime, rows, columns);
+        // debug printing
+        // printf("Matrix at iteration %d:\n", itr);
+        // print_matrix_array(A, rows, columns);
+        // printf("Press ENTER to continue...\n");
+        // fflush(stdout);
+        // getchar();
     } while (diff > CONVERGENCE_THRESHOLD && itr < MAX_ITERATIONS);
     free(A_prime);
     *eps = diff;
@@ -63,16 +72,29 @@ int jacobi(double *A, int rows, int columns, double *eps) {
  * @param columns Number of input matrix columns
  */
 void jacobi_iteration(double *A, double *A_prime, int rows, int columns) {
+
     for (int i = 1; i < rows - 1; i++) {
         for (int j = 1; j < columns - 1; j++) {
-            A_prime[i*rows + j] = (
-                A[(i+1)*rows + j] +
-                A[(i-1)*rows + j] +
-                A[i*rows + j+1] +
-                A[i*rows + j-1]
-            )/4;
+            // to perform following check, 'i' and 'j'
+            // have to be in range [0, rows|columns]
+            // if (i == 0 || j == 0 || i == rows || j == columns) {
+            //     A_prime[i*columns + j] = A[i*columns + j];
+            // }
+            // else {
+                // we're considering 'columns' instead of 'rows'
+                // because it retains the original value of number of
+                // rows in the original matrix
+                // TL;DR 'tis the correct offsetting
+                A_prime[i*columns + j] = (
+                    A[(i+1)*columns + j] +
+                    A[(i-1)*columns + j] +
+                    A[i*columns + j+1] +
+                    A[i*columns + j-1]
+                )/4.0;
+            // }
         }
     }
+
 }
 
 /**
@@ -95,7 +117,7 @@ void swap_pointers(void **a, void **b) {
 }
 
 /**
- * @brief Swap matrix (as array) elements one by one
+ * @brief Swap matrix (as array) elements one by one but border ones
  * 
  * @param a A matrix (as array)
  * @param b A matrix (as array)
@@ -105,8 +127,38 @@ void swap_pointers(void **a, void **b) {
 void replace_elements(double *a, double *b, int rows, int columns) {
     for (int i = 1; i < rows - 1; i++) {
         for (int j = 1; j < columns - 1; j++) {
-            a[i * rows + j] = b[i * rows + j];
+            a[i * columns + j] = b[i * columns + j];
         }
+    }
+}
+
+/**
+ * @brief Swap matrix (as array) elements one by one from first element
+ * (or from 0 if process is 0) to last element
+ * 
+ * @param a A matrix (as array)
+ * @param b A matrix (as array)
+ * @param columns Number of input matrix columns
+ * @param first_element First element to swap
+ * @param last_element Last row element to swap
+ * @param process Process providing the matrix array
+ */
+void replace_partial(
+    double *a,
+    double *b,
+    int columns,
+    int first_element,
+    int last_element,
+    int process
+) {
+    if (process != 0) {
+        first_element = 0;
+    }
+
+    for (int i = first_element + 1; i < last_element + columns - 1; i++) {
+        // skip replace if I'm on border
+        if (i % columns == 0 || i % columns == columns - 1) continue;
+        a[i] = b[i];
     }
 }
 
@@ -124,8 +176,10 @@ double convergence_check_g(double *x, double *x_prime, int rows, int columns) {
 
     for (int i = 1; i < rows - 1; i++) {
         for (int j = 1; j < columns - 1; j++) {
-            diff += (x_prime[i*rows+j] - x[i*rows+j]) *
-                (x_prime[i*rows+j] - x[i*rows+j]);
+            // see jacobi_iteration function for the reason why
+            // 'columns' is used instead of 'rows'
+            diff += (x_prime[i*columns+j] - x[i*columns+j]) *
+                (x_prime[i*columns+j] - x[i*columns+j]);
         }
     }
 
@@ -146,10 +200,78 @@ double convergence_check(double *x, double *x_prime, int rows, int columns) {
 
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < columns; j++) {
-            diff += (x_prime[i*rows+j] - x[i*rows+j]) *
-                (x_prime[i*rows+j] - x[i*rows+j]);
+            // see jacobi_iteration function for the reason why
+            // 'columns' is used instead of 'rows'
+            diff += (x_prime[i*columns+j] - x[i*columns+j]) *
+                (x_prime[i*columns+j] - x[i*columns+j]);
         }
     }
 
     return diff;
+}
+
+void scatterv_gatherv_describers(
+    int *scounts,
+    int *sdispls,
+    int *rcounts,
+    int *rdispls,
+    int *local_rows,
+    int nproc,
+    int pid,
+    int dim
+) {
+    // calculating the number of rows to distribute
+    int rows_per_proc = round(dim / (double) nproc);
+    int rem_rows = (dim % (nproc - 1)) != 0? dim % (nproc - 1): rows_per_proc;
+
+    // according to rows_per_proc rounding, increase remainder
+    if (((double) rows_per_proc) < (dim / (double) nproc)) {
+        rem_rows++;
+    }
+
+    printf(
+        "Distributing %d of %d matrix rows to %d processes\n",
+        rows_per_proc,
+        dim,
+        nproc
+    );
+    if (dim % nproc != 0) {
+        printf(
+            "P%d will get %d rows instead.\n",
+            nproc - 1,
+            rem_rows
+        );
+        printf("\n");
+    }
+    fflush(stdout);
+
+    for (int i = 0; i < nproc; i++) {
+        if (i == MASTER || i == nproc - 1) {
+            scounts[i] = (rows_per_proc + 1) * dim;
+            if (i == MASTER) {
+                sdispls[i] = 0;
+                rdispls[i] = 0;
+            }
+            else {
+                rdispls[i] = (rows_per_proc) * i * dim;
+                sdispls[i] = rdispls[i] - dim;
+            }
+        }
+        else {
+            scounts[i] = (rows_per_proc + 2) * dim;
+            rdispls[i] = (rows_per_proc) * i * dim;
+            sdispls[i] = rdispls[i] - dim;
+        }
+        rcounts[i] = rows_per_proc * dim;
+    }
+    // handle last rows for remainder
+    if (rem_rows != rows_per_proc) {
+        scounts[nproc - 1] = (rem_rows + 1) * dim;
+        rcounts[nproc - 1] = rem_rows * dim;
+    }
+
+    *local_rows = (pid != nproc - 1)?
+        rows_per_proc:
+        rem_rows;
+
 }
