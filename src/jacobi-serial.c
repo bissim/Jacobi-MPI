@@ -84,7 +84,7 @@ int main(int argc, char** argv) {
 
     // reading dimension and debug flag from command line
     if (argc < 3) {
-        printf("\a\aInsufficient number of parameters!\n");
+        printf("\aInsufficient number of parameters!\n");
         printf("Usage: %s <matrixOrder> <outputFileName> [<debugFlag>]\n\n", argv[0]);
         fflush(stdout);
         exit(EXIT_FAILURE);
@@ -154,7 +154,9 @@ int main(int argc, char** argv) {
     results = fopen(output_file, "a");
     fprintf(results, "%d,%f\n", n, elapsedtime);
     fflush(results);
+    // close file and get rid of file name
     fclose(results);
+    free(output_file);
 
     printf("\n\v%s terminated succesfully!\n", argv[0]);
     return EXIT_SUCCESS;
