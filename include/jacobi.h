@@ -33,6 +33,16 @@ void replace_elements(double *, double *, int, int);
 void replace_partial(double *, double *, int, int, int, int);
 double convergence_check_g(double *, double *, int, int);
 double convergence_check(double *, double *, int, int);
+void scatterv_gatherv_describers(
+    int *,
+    int *,
+    int *,
+    int *,
+    int *,
+    int,
+    int,
+    int
+);
 
 #ifdef __cplusplus
 }

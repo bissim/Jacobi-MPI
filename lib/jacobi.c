@@ -229,28 +229,28 @@ void scatterv_gatherv_describers(
         rem_rows++;
     }
 
-    printf(
-        "Distributing %d of %d matrix rows to %d processes\n",
-        rows_per_proc,
-        dim,
-        nproc
-    );
-    if (dim % nproc != 0) {
-        printf(
-            "P%d will get %d rows instead.\n",
-            nproc - 1,
-            rem_rows
-        );
-        printf("\n");
-    }
-    fflush(stdout);
+    // printf(
+    //     "Distributing %d of %d matrix rows to %d processes\n",
+    //     rows_per_proc,
+    //     dim,
+    //     nproc
+    // );
+    // if (dim % nproc != 0) {
+    //     printf(
+    //         "P%d will get %d rows instead.\n",
+    //         nproc - 1,
+    //         rem_rows
+    //     );
+    //     printf("\n");
+    // }
+    // fflush(stdout);
 
     for (int i = 0; i < nproc; i++) {
         if (i == MASTER || i == nproc - 1) {
             scounts[i] = (rows_per_proc + 1) * dim;
             if (i == MASTER) {
                 sdispls[i] = 0;
-                rdispls[i] = 0;
+                rdispls[i] = dim;
             }
             else {
                 rdispls[i] = (rows_per_proc) * i * dim;
@@ -262,7 +262,7 @@ void scatterv_gatherv_describers(
             rdispls[i] = (rows_per_proc) * i * dim;
             sdispls[i] = rdispls[i] - dim;
         }
-        rcounts[i] = rows_per_proc * dim;
+        rcounts[i] = scounts[i] - 2 * dim;
     }
     // handle last rows for remainder
     if (rem_rows != rows_per_proc) {
@@ -273,5 +273,9 @@ void scatterv_gatherv_describers(
     *local_rows = (pid != nproc - 1)?
         rows_per_proc:
         rem_rows;
+    // MASTER has 1 row less
+    *local_rows = (pid != MASTER)?
+        *local_rows:
+        *local_rows - 1;
 
 }
