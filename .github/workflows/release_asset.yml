@@ -28,6 +28,7 @@ jobs:
       - name: Build project
         run: |
           echo "Building Jacobi MPI, version $(cat VERSION)"
+          mkdir bin
           make
       - name: Pack project
         run: |
