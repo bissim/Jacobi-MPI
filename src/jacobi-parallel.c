@@ -67,6 +67,8 @@ int main (int argc, char **argv) {
 
     // program execution management
     unsigned char debug = 0;
+    char *output_file;
+    FILE *results;
 
     // business variables
     /**
@@ -76,18 +78,9 @@ int main (int argc, char **argv) {
     int n;
     int local_rows;
     int local_g_rows;
-    int *local_g_rows_count;
-    /**
-     * @brief The number of rows distributed to every processor
-     *
-     */
-    int rows_per_proc;
-    /**
-     * @brief The number of rows given to last processor if n/nproc
-     * has got remainder
-     *
-     */
-    int rem_rows;
+    int first_g_row;
+    int last_g_row;
+    int last_local_row;
     /**
      * @brief The coefficient matrix in linear system
      *
@@ -95,31 +88,10 @@ int main (int argc, char **argv) {
     double *A;
     double *local_A;
     double *local_A_g;
-    double *local_A_prime;
+    double *local_A_g_prime;
     int num_iterations;
     double diffnorm;
     double local_diffnorm;
-
-    printf("Running %s...\n\n\v", argv[0]);
-    fflush(stdout);
-
-    // check for command-line arguments
-    if (argc < 2) {
-		printf("\a\aInsufficient number of parameters!\n");
-        printf("Usage: %s <matrixOrder> [<debugFlag>]\n\n", argv[0]);
-        fflush(stdout);
-		exit(EXIT_FAILURE);
-	}
-    else if (argc == 2) {
-        n = atoi(argv[1]);
-        debug = 0;
-    }
-	else {
-		n = atoi(argv[1]);
-        debug = (unsigned char) atoi(argv[2]);
-	}
-    printf("Matrix dimension: %dx%d (%d elements)\n", n, n, n*n);
-    fflush(stdout);
 
     // initialize MPI environment
     MPI_Init(&argc, &argv);
@@ -127,75 +99,81 @@ int main (int argc, char **argv) {
     MPI_Comm_size(COMM, &nproc);
     MPI_Comm_rank(COMM, &me);
 
-    // check whether number of processor is power of 2
-    if ((nproc & (nproc - 1)) != 0) {
-        fprintf(
-            stderr,
-            "\a\a[P%d] Number of processor must be a power of 2!",
-            me
-        );
-        fflush(stderr);
-        MPI_Abort(COMM, EXIT_FAILURE);
+    if (me == MASTER) {
+        printf("Running %s over %d processes...\n\n\v", argv[0], nproc);
+        fflush(stdout);
     }
-    else if (n == nproc) {
-        fprintf(
-            stderr,
-            "\a\a[P%d] Matrix size must be such that every processor receives ",
-            me
-        );
-        fprintf(
-            stderr,
-            "at least 2 rows (%d/%d is 1)!",
-            n,
-            nproc
-        );
-        fflush(stderr);
-        MPI_Abort(COMM, EXIT_FAILURE);
+    if (debug && me != MASTER) {
+        printf("Running %s over %d processes...\n\n\v", argv[0], nproc);
+        fflush(stdout);
     }
 
-    printf("\n\t\t>>> PROCESS %d OF %d <<<\n\n", me, nproc);
-    fflush(stdout);
+    // check for command-line arguments
+    if (argc < 3) {
+        if (me == MASTER) {
+            printf("\aInsufficient number of parameters!\n");
+            printf("Usage: %s <matrixOrder> <outputFileName> [<debugFlag>]\n\n", argv[0]);
+            fflush(stdout);
+        }
 
-    // calculating the number of rows to distribute
-    rows_per_proc = round(n / (double) nproc);
-    rem_rows = (n % (nproc - 1)) != 0? n % (nproc - 1): rows_per_proc;
-    if (debug && me == MASTER) {
-        printf(
-            "[P%d] %d mod (%d - 1) is %d\n",
-            me,
-            n,
-            nproc,
-            (n % (nproc - 1))
-        );
+        MPI_Abort(COMM, EXIT_FAILURE);
+		exit(EXIT_FAILURE);
+	}
+    else if (argc == 3) {
+        n = atoi(argv[1]);
+        output_file = malloc ((strlen(argv[2]) + 1) * sizeof output_file);
+        sprintf(output_file, "%s", argv[2]);
+        debug = 0;
+    }
+	else {
+		n = atoi(argv[1]);
+        output_file = malloc ((strlen(argv[2]) + 1) * sizeof output_file);
+        sprintf(output_file, "%s", argv[2]);
+        debug = (unsigned char) atoi(argv[3]);
+	}
+
+    if (me == MASTER) {
+        printf("Matrix dimension: %dx%d (%d elements)\n", n, n, n*n);
         printf("\n");
         fflush(stdout);
     }
-    // according to rows_per_proc rounding, increase remainder
-    if (((double) rows_per_proc) < (n / (double) nproc)) {
-        rem_rows++;
+
+    // check whether number of processor is power of 2
+    if ((nproc & (nproc - 1)) != 0) {
+        if (me == MASTER) {
+            fprintf(
+                stderr,
+                "\a[P%d] Number of processor must be a power of 2!",
+                me
+            );
+        }
+
+        MPI_Abort(COMM, EXIT_FAILURE);
+    }
+    else if (n == nproc) {
+        if (me == MASTER) {
+            fprintf(
+                stderr,
+                "\a[P%d] Matrix size must be such that every processor receives ",
+                me
+            );
+            fprintf(
+                stderr,
+                "at least 2 rows (%d/%d is 1)!",
+                n,
+                nproc
+            );
+        }
+
+        MPI_Abort(COMM, EXIT_FAILURE);
     }
 
     if (debug) {
-        printf(
-            "[P%d] Distributing %d of %d matrix rows to %d processes\n",
-            me,
-            rows_per_proc,
-            n,
-            nproc
-        );
-        if (n % nproc != 0) {
-            printf(
-                "[P%d] P%d will get %d rows instead.\n",
-                me,
-                nproc - 1,
-                rem_rows
-            );
-            printf("\n");
-        }
+        printf("\n\t\t>>> PROCESS %d OF %d <<<\n\n", me, nproc);
         fflush(stdout);
     }
 
-    // generate matrix and known terms vector
+    // generate matrix vector
     A = malloc(n * n * sizeof *A);
     if (me == MASTER) {
         if (debug) {
@@ -214,65 +192,70 @@ int main (int argc, char **argv) {
         }
     }
 
+    // calculate the number of rows to distribute
     // calculate number of elements and 
     // matrix offsets for every processor
+    if (debug && me == MASTER) {
+        printf(
+            "[P%d] %d mod (%d - 1) is %d\n",
+            me,
+            n,
+            nproc,
+            (n % (nproc - 1))
+        );
+        printf("\n");
+        fflush(stdout);
+    }
+
     sendcounts = malloc(nproc * sizeof *sendcounts);
     recvcounts = malloc(nproc * sizeof *recvcounts);
     senddispls = malloc(nproc * sizeof *senddispls);
     recvdispls = malloc(nproc * sizeof *recvdispls);
-    for (int i = 0; i < nproc; i++) {
-        if (i == MASTER || i == nproc - 1) {
-            sendcounts[i] = (rows_per_proc + 1) * n;
-            if (i == MASTER) {
-                senddispls[i] = 0;
-                recvdispls[i] = 0;
-            }
-            else {
-                recvdispls[i] = (rows_per_proc) * i * n;
-                senddispls[i] = recvdispls[i] - n;
-            }
-        }
-        else {
-            sendcounts[i] = (rows_per_proc + 2) * n;
-            recvdispls[i] = (rows_per_proc) * i * n;
-            senddispls[i] = recvdispls[i] - n;
-        }
-        recvcounts[i] = rows_per_proc * n;
-    }
-    // handle last rows for remainder
-    if (rem_rows != rows_per_proc) {
-        sendcounts[nproc - 1] = (rem_rows + 1) * n;
-        recvcounts[nproc - 1] = rem_rows * n;
-    }
+    scatterv_gatherv_describers(
+        sendcounts,
+        senddispls,
+        recvcounts,
+        recvdispls,
+        &local_rows,
+        nproc,
+        me,
+        n
+    );
 
-    local_rows = (me != nproc - 1)?
-        rows_per_proc:
-        rem_rows;
-    // add 1 row to first and last processor, 2 rows for other ones
-    local_g_rows = (me != MASTER && me != nproc - 1)?
+    // add 1 row to last processor, 2 rows for other ones
+    local_g_rows = (me != nproc - 1)?
         local_rows + 2:
         local_rows + 1;
-    local_g_rows_count = malloc(nproc * sizeof local_g_rows_count);
-    local_g_rows_count[me] = local_g_rows;
-
     // print number of rows, cells and offsets
-    if (debug && me == MASTER) {
-        for (int i = 0; i < nproc; i++) {
-            printf(
-                "[P%d] P%d will take %d cells starting from cell %d ",
-                me,
-                i,
-                sendcounts[i],
-                senddispls[i]
-            );
-            printf(
-                "and will send back %d cells starting from cell %d.\n",
-                recvcounts[i],
-                recvdispls[i]
-            );
+    if (debug) {
+        if (me == MASTER) {
+            for (int p = 0; p < nproc; p++)
+            {
+                printf("\n");
+                printf(
+                    "I'll send to P%d %d cells from cell %d\n",
+                    p,
+                    sendcounts[p],
+                    senddispls[p]
+                );
+                printf(
+                    "I'll get back from P%d %d cells from cell %d\n",
+                    p,
+                    recvcounts[p],
+                    recvdispls[p]
+                );
+                printf("\n");
+            }
         }
+
+        printf(
+            "[P%d] Local ghosted matrix will have %d rows\n",
+            me,
+            local_g_rows
+        );
         printf("\n");
         fflush(stdout);
+        // MPI_Pause(me, MASTER, COMM);
     }
 
     if (debug) {
@@ -287,39 +270,73 @@ int main (int argc, char **argv) {
             me,
             CONVERGENCE_THRESHOLD
         );
+        printf("\n");
         fflush(stdout);
     }
 
-    // apply Jacobi method
-    local_A = malloc(sendcounts[me] * sizeof *local_A_g);
-    local_A_prime = malloc(sendcounts[me] * sizeof *local_A_prime);
-    memset(local_A_prime, 0, sendcounts[me]);
+    // calculate inner rows indexes
+    // for row exchange among processors
+    first_g_row = n;
+    last_g_row = (sendcounts[me]/n - 2) * n;
+    last_local_row = last_g_row + n;
+    if (debug) {
+        printf("[P%d] First significative row index: %d\n", me, first_g_row);
+        printf("[P%d] Last significative row index: %d\n", me, last_g_row);
+        printf("[P%d] Last ghosted row index: %d\n", me, last_local_row);
+        printf("\n");
+        fflush(stdout);
+        // MPI_Pause(me, MASTER, COMM);
+    }
+
+    local_A_g = malloc(sendcounts[me] * sizeof *local_A_g);
+    local_A_g_prime = malloc(sendcounts[me] * sizeof *local_A_g_prime);
+    memset(local_A_g_prime, 0, sendcounts[me]);
 
     // distribute initial matrix slices to processes
     MPI_Scatterv(
         A, sendcounts, senddispls, MPI_DOUBLE,
-        local_A, sendcounts[me], MPI_DOUBLE,
+        local_A_g, sendcounts[me], MPI_DOUBLE,
         MASTER, COMM
     );
+    // no more need for counts and displacements arrays
+    free(sendcounts);
+    free(senddispls);
 
+    // last row in last submatrix of last process
+    // is not considered for row replacements
+    // between local_A_g and local_A_g_prime
+    if (me == nproc - 1) {
+        for (int i = last_local_row; i < last_local_row + n; i++) {
+            local_A_g_prime[i] = local_A_g[i];
+        }
+    }
+
+    // apply Jacobi method over submatrices
     num_iterations = 0;
     t_start = MPI_Wtime();
     do {
         if (debug) {
-            printf("[P%d] Received local ghosted matrix:\n", me);
-            print_matrix_array(local_A, local_g_rows, n);
+            printf("[P%d] Local ghosted matrix:\n", me);
+            print_matrix_array(local_A_g, local_g_rows, n);
             printf("\n");
             fflush(stdout);
         }
 
         // apply a single iteration
-        jacobi_iteration(local_A, local_A_prime, local_g_rows, n);
+        jacobi_iteration(local_A_g, local_A_g_prime, local_g_rows, n);
         num_iterations++;
 
+        if (debug) {
+            printf("[P%d] Local prime matrix:\n", me);
+            print_matrix_array(local_A_g_prime, local_g_rows, n);
+            printf("\n");
+            fflush(stdout);
+        }
+
         // check for convergence test before reiterating
-        local_diffnorm = convergence_check(
-            local_A,
-            local_A_prime,
+        local_diffnorm = convergence_check_g(
+            local_A_g,
+            local_A_g_prime,
             local_g_rows,
             n
         );
@@ -363,10 +380,11 @@ int main (int argc, char **argv) {
         // to previous process and
         // receive first row
         // from previous one
+        // P0 has no previous one
         if (me != MASTER) {
             if (debug) {
                 printf(
-                    "[P%d] Sending to process %d\n",
+                    "[P%d] Exchanging with process %d\n",
                     me,
                     me - 1
                 );
@@ -374,8 +392,11 @@ int main (int argc, char **argv) {
             }
 
             MPI_Sendrecv(
-                &local_A_prime[n], n, MPI_DOUBLE, me - 1, TAG,
-                local_A_prime, n, MPI_DOUBLE, me - 1, TAG,
+                // send first unghosted line to previous process
+                &local_A_g_prime[first_g_row], n, MPI_DOUBLE, me - 1, TAG,
+                // receive first line from previous process
+                // and put it as my first ghosted line
+                local_A_g_prime, n, MPI_DOUBLE, me - 1, TAG,
                 COMM, &status
             );
         }
@@ -384,10 +405,11 @@ int main (int argc, char **argv) {
         // to next process and
         // receive last row
         // from next one
+        // Pnproc-1 has no next one
         if (me != nproc - 1) {
             if (debug) {
                 printf(
-                    "[P%d] Sending to process %d\n",
+                    "[P%d] Exchanging with process %d\n",
                     me,
                     me + 1
                 );
@@ -395,44 +417,108 @@ int main (int argc, char **argv) {
             }
 
             MPI_Sendrecv(
-                &local_A_prime[(sendcounts[me]/n-2)*n], n, MPI_DOUBLE,
-                me + 1, TAG,
-                &local_A_prime[(sendcounts[me]/n-2)*n+n], n, MPI_DOUBLE,
-                me + 1, TAG,
+                // send last unghosted line to next process
+                &local_A_g_prime[last_g_row], n, MPI_DOUBLE, me + 1, TAG,
+                // receive last line from next process
+                // and put it as my last ghosted line
+                &local_A_g_prime[last_local_row], n, MPI_DOUBLE, me + 1, TAG,
                 COMM, &status
             );
         }
 
         if (debug) {
             printf("[P%d] Local prime matrix:\n", me);
-            print_matrix_array(local_A_prime, local_g_rows, n);
+            print_matrix_array(local_A_g_prime, local_g_rows, n);
             printf("\n");
             fflush(stdout);
+            // pause for debug purposes
+            // MPI_Pause(me, MASTER, COMM);
         }
 
         // swap matrices
-        replace_elements(local_A, local_A_prime, local_g_rows, n);
-
-        // at last, recollect submatrices
-        MPI_Gatherv(
-            local_A, local_rows*n, MPI_DOUBLE,
-            A, recvcounts, recvdispls, MPI_DOUBLE,
-            MASTER, COMM
+        replace_partial(
+            local_A_g,
+            local_A_g_prime,
+            n,
+            first_g_row,
+            last_local_row,
+            me
         );
-        if (debug && me == MASTER) {
-            printf(
-                "[P%d] After iteration %d, matrix is:\n",
-                me,
-                num_iterations
-            );
-            print_matrix_array(A, n, n);
+
+        if (debug) {
+            printf("[P%d] After swap, local matrix is now:\n", me);
+            print_matrix_array(local_A_g, local_g_rows, n);
             printf("\n");
             fflush(stdout);
+            // pause for debug purposes
+            // MPI_Pause(me, MASTER, COMM);
         }
     } while (
         diffnorm > CONVERGENCE_THRESHOLD &&
         num_iterations < MAX_ITERATIONS
     );
+
+    // no more need for local prime matrix
+    free(local_A_g_prime);
+
+    // unghost local submatrices before recollection
+    // unghosted submatrices have 2 rows less
+    local_A = malloc(local_rows * n * sizeof *local_A);
+    // memset(local_A, 0, local_rows * n);
+    if (debug) {
+        printf(
+            "[P%d] Unghosting %dx%d local matrix from %dx%d ghosted one...\n",
+            me,
+            local_rows,
+            n,
+            local_g_rows,
+            n
+        );
+        printf("[P%d] Local submatrix before unghosting:\n", me);
+        print_matrix_array(local_A_g, local_g_rows, n);
+        printf("\n");
+        fflush(stdout);
+        // MPI_Pause(me, MASTER, COMM);
+    }
+    for (int i = 0; i < local_rows; i++) {
+        for (int j = 0; j < n; j++) {
+            // offset is made of n
+            local_A[i*n + j] = local_A_g[i*n + n + j];
+        }
+    }
+    // no more need for local matrix
+    free(local_A_g);
+
+    if (debug) {
+        printf("[P%d] Local submatrix after unghosting:\n", me);
+        print_matrix_array(local_A, local_rows, n);
+        printf("\n");
+        fflush(stdout);
+        // MPI_Pause(me, MASTER, COMM);
+    }
+
+    // at last, recollect submatrices
+    MPI_Gatherv(
+        local_A, recvcounts[me], MPI_DOUBLE,
+        A, recvcounts, recvdispls, MPI_DOUBLE,
+        MASTER, COMM
+    );
+    // no more need for local unghosted matrix
+    // and count and displacement arrays
+    free(local_A);
+    free(recvcounts);
+    free(recvdispls);
+    if (debug && me == MASTER) {
+        printf(
+            "[P%d] After %d iteration, matrix is:\n",
+            me,
+            num_iterations
+        );
+        print_matrix_array(A, n, n);
+        printf("\n");
+        fflush(stdout);
+    }
+
     t_end = MPI_Wtime() - t_start;
     if (debug) {
         printf("\n");
@@ -443,12 +529,6 @@ int main (int argc, char **argv) {
     if (me == MASTER) {
         free(A);
     }
-    free(sendcounts);
-    free(senddispls);
-    free(recvcounts);
-    free(recvdispls);
-    free(local_A);
-    free(local_A_prime);
 
     if (me == MASTER) {
         printf(
@@ -466,12 +546,31 @@ int main (int argc, char **argv) {
         MASTER, COMM
     );
 
-    printf("[P%d] Local calculation time: %.3lf ms\n", me, t_end * MS_IN_S);
+    if (debug) {
+        printf("[P%d] Local calculation time: %.3lf ms\n", me, t_end * MS_IN_S);
+    }
     if (me == MASTER) {
         printf("[P%d] Max time: %.3f ms\n", me, t_max * MS_IN_S);
+        printf("\n");
+        printf("Writing result in %s\n", output_file);
+        fflush(stdout);
+        results = fopen(output_file, "a");
+        fprintf(results, "%d,%f\n", n, t_max);
+        fflush(results);
+        // close file
+        fclose(results);
     }
 
-    printf("\n\v\a\a\a%s terminated succesfully!\n", argv[0]);
+    // everyone, get rid of file name
+    free(output_file);
+
+    if (me == MASTER) {
+        printf("\n\v%s terminated succesfully!\n", argv[0]);
+    }
+    if (debug && me != MASTER) {
+        printf("\n\v%s terminated succesfully!\n", argv[0]);
+    }
+
     MPI_Finalize();
 
     return EXIT_SUCCESS;
