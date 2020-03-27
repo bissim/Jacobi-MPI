@@ -28,6 +28,19 @@ extern int MASTER;
  */
 extern int TAG;
 
+void MPI_Pause(int process, int master, MPI_Comm comm) {
+    if (process == master) {
+        printf("[P%d] Press ENTER to continue...\n", process);
+        fflush(stdout);
+        getchar();
+    }
+    else {
+        printf("[P%d] Waiting for MASTER...\n", process);
+        fflush(stdout);
+    }
+    MPI_Barrier(comm);
+}
+
 /**
  * Funzione che stampa un messaggio con il
  * rank del processo come prefisso

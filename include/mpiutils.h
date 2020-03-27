@@ -9,6 +9,8 @@
  * @copyright Copyright (c) 2020
  * 
  */
+#include "mpi.h"
+
 #ifndef MPIUTILS_H_
 #define MPIUTILS_H_
 
@@ -29,6 +31,7 @@ static int MASTER = 0;
  */
 static int TAG = 1;
 
+void MPI_Pause(int, int, MPI_Comm);
 void MPI_Printf(int, char *);
 void MPI_Free(int, void *);
 void checkMPIerror(int *, int *);
