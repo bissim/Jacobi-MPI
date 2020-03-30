@@ -3,7 +3,7 @@
  * @ingroup libraries
  * @author Simone Bisogno (bissim.github.io)
  * @brief MPI utility functions.
- * @version 0.1.0-beta+20200330
+ * @version 0.1.0-beta+20200331
  * @date 2020-02-07
  * 
  * @copyright Copyright (c) 2020
@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-//#include "mpi.h"
+#include "mpi.h"
 #include "mpiutils.h"
 
 /**
