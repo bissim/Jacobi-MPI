@@ -3,7 +3,7 @@
  * @ingroup libraries
  * @author Simone Bisogno (bissim.github.io)
  * @brief MPI utility functions.
- * @version 0.1.0-beta+20200327.1435
+ * @version 0.1.0-beta+20200330
  * @date 2020-02-07
  * 
  * @copyright Copyright (c) 2020
@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "mpi.h"
+//#include "mpi.h"
 #include "mpiutils.h"
 
 /**
@@ -28,18 +28,18 @@ extern int MASTER;
  */
 extern int TAG;
 
-void MPI_Pause(int process, int master, MPI_Comm comm) {
-    if (process == master) {
-        printf("[P%d] Press ENTER to continue...\n", process);
-        fflush(stdout);
-        getchar();
-    }
-    else {
-        printf("[P%d] Waiting for MASTER...\n", process);
-        fflush(stdout);
-    }
-    MPI_Barrier(comm);
-}
+// void MPI_Pause(int process, int master, MPI_Comm comm) {
+//     if (process == master) {
+//         printf("[P%d] Press ENTER to continue...\n", process);
+//         fflush(stdout);
+//         getchar();
+//     }
+//     else {
+//         printf("[P%d] Waiting for MASTER...\n", process);
+//         fflush(stdout);
+//     }
+//     MPI_Barrier(comm);
+// }
 
 /**
  * Funzione che stampa un messaggio con il

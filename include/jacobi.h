@@ -4,7 +4,7 @@
  * @ingroup headers
  * @author Simone Bisogno (bissim.github.io)
  * @brief Header file for Jacobi method functions.
- * @version 0.1.0-beta+20200327.1435
+ * @version 0.1.0-beta+20200330
  * @date 2020-02-07
  * 
  * @copyright Copyright (c) 2020
