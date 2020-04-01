@@ -48,7 +48,7 @@ plotTitle = "Relaxed Jacobi (" . type . ")"
 set title plotTitle font ",20" tc rgb "#606060"
 set key left box autotitle columnhead
 set xlabel "Matrix size (n times n)"
-set ylabel "Time (ms)"
+set ylabel "Time (s)"
 
 # grid style
 set style line 1 lt 1 lw 0.5 lc rgb "#C0C0C0"

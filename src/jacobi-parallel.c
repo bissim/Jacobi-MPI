@@ -555,7 +555,7 @@ int main (int argc, char **argv) {
         printf("Writing result in %s\n", output_file);
         fflush(stdout);
         results = fopen(output_file, "a");
-        fprintf(results, "%d,%f\n", n, t_max);
+        fprintf(results, "%d,%f\n", nproc, t_max);
         fflush(results);
         // close file
         fclose(results);
