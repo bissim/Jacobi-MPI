@@ -275,6 +275,7 @@ elif [[ $TYPE == "parallel" ]]; then
     echo -e "Custom user password:\t$PASSWORD" | tee -a $OUTPUT
     echo -e "\nBe sure that $PEM_KEY is in ./scripts/key directory!" | tee -a $OUTPUT
     cd ./scripts
+    chmod +x ./make_cluster.sh
     ./make_cluster.sh $EC2_AMI $ROOT $EC2_SG $EC2_TYPE $KEY $CLUSTER_SIZE $USERNAME $PASSWORD
     cd ..
 
@@ -284,9 +285,11 @@ elif [[ $TYPE == "parallel" ]]; then
     MASTER_IP=${ip_list[0]}
     echo "Master IP is $MASTER_IP" | tee -a $OUTPUT
     DEPLOY_SCRIPT=deploy.sh
+    chmod +x ./$DEPLOY_SCRIPT
     echo -e "\nDeploying $DEPLOY_SCRIPT over MASTER..." | tee -a $OUTPUT
     scp -i ./scripts/key/$PEM_KEY ./$DEPLOY_SCRIPT $ROOT@$MASTER_IP:~
-    REMOTE_COMMAND="./$DEPLOY_SCRIPT -k $PEM_KEY -R $ROOT"
+    REMOTE_COMMAND="chmod +x $DEPLOY_SCRIPT &&"
+    REMOTE_COMMAND="${REMOTE_COMMAND} ./$DEPLOY_SCRIPT -k $PEM_KEY -R $ROOT"
     REMOTE_COMMAND="${REMOTE_COMMAND} -u $USERNAME -p $PASSWORD -n $CLUSTER_SIZE -M"
     REMOTE_COMMAND="${REMOTE_COMMAND} -P $BINARY -d $DIMENSION"
 
