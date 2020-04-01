@@ -4,7 +4,7 @@
  * @ingroup runnable
  * @author Simone Bisogno (bissim.github.io)
  * @brief Serial version of Jacobi method.
- * @version 0.1.0-beta+20200401.2330
+ * @version 0.1.0-beta+20200402
  * @date 2020-02-03
  *
  * @copyright Copyright (c) 2020
