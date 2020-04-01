@@ -241,9 +241,9 @@ elif [[ $TYPE == "parallel" ]]; then
     echo -e "\nRunning in parallel over a cluster of $CLUSTER_SIZE instances" | tee -a $OUTPUT
 
     # copy AWS Build Cluster Script in some subfolder
-    git clone https://github.com/bissim/aws-cluster-build-script.git
-    rm -rf ./aws-cluster-build-script/.git/
-    mv ./aws-cluster-build-script ./scripts
+    git clone https://github.com/bissim/aws-build-cluster-script.git
+    rm -rf ./aws-build-cluster-script/.git/
+    mv ./aws-build-cluster-script ./scripts
 
     # create cluster
     EC2_AMI="ami-07ebfd5b3428b6f4d"
@@ -262,6 +262,7 @@ elif [[ $TYPE == "parallel" ]]; then
     echo -e "Instance root user:\t$ROOT" | tee -a $OUTPUT
     echo -e "Custom user name:\t$USERNAME" | tee -a $OUTPUT
     echo -e "Custom user password:\t$PASSWORD" | tee -a $OUTPUT
+    echo -e "\nBe sure that $PEM_KEY is in ./scripts/key directory!" | tee -a $OUTPUT
     ./scripts/make_cluster.sh $EC2_AMI $ROOT $EC2_SG $EC2_TYPE $KEY $CLUSTER_SIZE $USERNAME $PASSWORD
 
     # send preparation script to master and run it
