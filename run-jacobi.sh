@@ -262,7 +262,7 @@ elif [[ $TYPE == "parallel" ]]; then
     # create cluster
     EC2_AMI="ami-07ebfd5b3428b6f4d"
     EC2_SG="sg-037781947b5515887"
-    EC2_TYPE="t2.micro"
+    EC2_TYPE="m4.xlarge" # m4.xlarge
     ROOT="ubuntu"
     USERNAME="pcpc"
     PASSWORD="pcpc-test"
