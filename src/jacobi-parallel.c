@@ -117,20 +117,20 @@ int main (int argc, char **argv) {
         }
 
         MPI_Abort(COMM, EXIT_FAILURE);
-		exit(EXIT_FAILURE);
-	}
+        exit(EXIT_FAILURE);
+    }
     else if (argc == 3) {
         n = atoi(argv[1]);
         output_file = malloc ((strlen(argv[2]) + 1) * sizeof output_file);
         sprintf(output_file, "%s", argv[2]);
         debug = 0;
     }
-	else {
-		n = atoi(argv[1]);
+    else {
+        n = atoi(argv[1]);
         output_file = malloc ((strlen(argv[2]) + 1) * sizeof output_file);
         sprintf(output_file, "%s", argv[2]);
         debug = (unsigned char) atoi(argv[3]);
-	}
+    }
 
     if (me == MASTER) {
         printf("Matrix dimension: %dx%d (%d elements)\n", n, n, n*n);
