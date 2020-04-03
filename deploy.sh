@@ -5,7 +5,7 @@ set -euo pipefail
 IFS=$'\n\t'
 
 SCRIPT_NAME=$0
-JACOBI_MPI_VERSION=0.1.0-beta+20200327.1435
+JACOBI_MPI_VERSION=$(curl -s -L https://raw.githubusercontent.com/bissim/Jacobi-MPI/master/VERSION)
 JACOBI_MPI_REPOSITORY=https://github.com/bissim/Jacobi-MPI
 JACOBI_MPI_BIN=jacobi-mpi.tar.gz
 JACOBI_MPI_BIN_URL=${JACOBI_MPI_REPOSITORY}/releases/download/${JACOBI_MPI_VERSION}/${JACOBI_MPI_BIN}
