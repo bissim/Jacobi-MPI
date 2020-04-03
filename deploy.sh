@@ -193,18 +193,26 @@ if (( $IS_MASTER == 1 )); then
     #sudo mv $HOSTFILE /home/$USERNAME/$HOSTFILE
     . ip_private_list.array
     #for (( i=1; i<=${#ip_private_list[@]}; i++ ))
-	#do
-	#	## erase current hostfile if already exists
-	#	if [[ -e $HOSTFILE"_$i" ]]
-	#	then
-	#		> $HOSTFILE"_$i"
-	#	fi
-	#	for private_ip in "${ip_private_list[@]:0:$i}"
-	#	do
-	#		echo $private_ip >> $HOSTFILE"_$i"
-	#	done
+    #do
+    #    ## erase current hostfile if already exists
+    #    if [[ -e $HOSTFILE"_$i" ]]
+    #    then
+    #        > $HOSTFILE"_$i"
+    #    fi
+    #    for private_ip in "${ip_private_list[@]:0:$i}"
+    #    do
+    #        echo $private_ip >> $HOSTFILE"_$i"
+    #	 done
     #    sudo mv $HOSTFILE"_$i" /home/$USERNAME/$HOSTFILE"_$i"
-	#done
+    #done
+    ## erase current hostfile if already exists
+    if [[ -e $HOSTFILE ]]; then
+        > $HOSTFILE
+    fi
+    for private_ip in "${#ip_private_list[@]}"; do
+        echo $private_ip >> $HOSTFILE
+    done
+    sudo mv $HOSTFILE /home/$USERNAME/$HOSTFILE
 
     #
     # copy user keys to send and run scripts remotely
