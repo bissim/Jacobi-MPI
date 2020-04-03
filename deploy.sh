@@ -11,7 +11,10 @@ JACOBI_MPI_BIN=jacobi-mpi.tar.gz
 JACOBI_MPI_BIN_URL=${JACOBI_MPI_REPOSITORY}/releases/download/${JACOBI_MPI_VERSION}/${JACOBI_MPI_BIN}
 OPENMPI_VERSION=4.0.3
 OPENMPI_ARCHIVE=openmpi-${OPENMPI_VERSION}.tar.gz
+OPENMPI_RPM_NAME=openmpi-${OPENMPI_VERSION}-1.src
+OPENMPI_RPM=${OPENMPI_RPM_NAME}.rpm
 OPENMPI_URL=https://download.open-mpi.org/release/open-mpi/v4.0/${OPENMPI_ARCHIVE}
+OPENMPI_RPM_URL=https://download.open-mpi.org/release/open-mpi/v4.0/${OPENMPI_RPM}
 IS_MASTER=0
 CLUSTER_DIM=0
 HOSTFILE="hostfile"
@@ -75,29 +78,36 @@ done
 # update remote repositories
 #
 echo -e "\nUpdate repositories"
+sudo add-apt-repository universe
 sudo apt update #&& sudo apt upgrade -y
 
 #
 # install build essential to build OpenMPI
-# install expect for later use by master
+# install alien for later use by everyone
 #
 echo -e "\nInstall dependencies"
-sudo apt install build-essential expect -y
+sudo apt install build-essential alien -y
 
 #
 # download and extract OpenMPI source code
 #
 wget "$OPENMPI_URL" -O ./$OPENMPI_ARCHIVE && tar -xzf ./$OPENMPI_ARCHIVE
+#wget "$OPENMPI_RPM_URL" -O ./$OPENMPI_RPM
 
 #
 # configure, build and install OpenMPI
 # note: this won't work on t2.micro instances!
 #
+# compile from binaries
 cd ./openmpi-${OPENMPI_VERSION}/
 ./configure --prefix="/usr/local"
 make -j && sudo make install && sudo ldconfig
 cd ..
+# install from APT
 #sudo apt install openmpi-bin libopenmpi-dev -y
+# install from RPT package
+#sudo alien ${OPENMPI_RPM}
+#sudo dpkg -i ${OPENMPI_RPM_NAME}.deb
 
 #
 # download and extract binaries
@@ -168,23 +178,6 @@ if (( $IS_MASTER == 1 )); then
     for (( i=1; i<$CLUSTER_DIM; i++ )); do
         sudo -u $USERNAME scp -oStrictHostKeyChecking=no /home/$USERNAME/$PROGRAM $USERNAME@NODE_${i}:~
     done
-
-    #
-    # get user shell, autocompile password with expect
-    # credits: https://superuser.com/questions/1343261/#1343270
-    #
-    #AUTO_SU="./autosu"
-    #echo -e "#!/usr/bin/expect\n" > $AUTO_SU
-    #echo 'COMMAND=$1' >> $AUTO_SU
-    #echo "log_user 0" >> $AUTO_SU
-    #echo "spawn /bin/su $USERNAME" >> $AUTO_SU
-    #echo "expect \"Password: \"" >> $AUTO_SU
-    #echo "send \"$PASSWORD\n\"" >> $AUTO_SU
-    #echo '$COMMAND' >> $AUTO_SU
-    #echo -e "interact\n" >> $AUTO_SU
-    #echo -e "exit\n" >> $AUTO_SU
-    #chmod +x $AUTO_SU
-    #chmod go-rwx $AUTO_SU
 
     #
     # generate the hostfile

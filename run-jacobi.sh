@@ -130,7 +130,8 @@ if [[ ! $DIMENSION ]]; then
 fi
 
 BINARY=jacobi-$TYPE
-echo -e "\nRunning $BINARY $ITERATIONS times over a $DIMENSION x $DIMENSION initial matrix"
+echo -e "\nRunning $BINARY $ITERATIONS times over a"
+echo -e "\r $DIMENSION x $DIMENSION initial matrix"
 if (( $DEBUG == 1 )); then
     echo "Debug option enabled"
 fi
