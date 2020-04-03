@@ -18,8 +18,8 @@
             "./bin/jacobi-serial",
             "src/jacobi-serial.c"
         ],
-        "directory": "/mnt/c/Users/bisim/git/Jacobi-MPI",
-        "file": "src/jacobi-serial.c"
+        "directory": "./src",
+        "file": "jacobi-serial.c"
     },
     {
         "arguments": [
@@ -43,8 +43,8 @@
             "./bin/jacobi-parallel",
             "src/jacobi-parallel.c"
         ],
-        "directory": "/mnt/c/Users/bisim/git/Jacobi-MPI",
-        "file": "src/jacobi-parallel.c"
+        "directory": "./src",
+        "file": "jacobi-parallel.c"
     },
     {
         "arguments": [
@@ -63,8 +63,8 @@
             "-Werror=format-security",
             "lib/mpiutils.c"
         ],
-        "directory": "/mnt/c/Users/bisim/git/Jacobi-MPI",
-        "file": "lib/mpiutils.c"
+        "directory": "./lib",
+        "file": "mpiutils.c"
     },
     {
         "arguments": [
@@ -83,8 +83,8 @@
             "-Werror=format-security",
             "lib/matrixutils.c"
         ],
-        "directory": "/mnt/c/Users/bisim/git/Jacobi-MPI",
-        "file": "lib/matrixutils.c"
+        "directory": "./lib",
+        "file": "matrixutils.c"
     },
     {
         "arguments": [
@@ -108,8 +108,8 @@
             "./bin/jacobi-parallel",
             "src/jacobi-parallel.c"
         ],
-        "directory": "/mnt/c/Users/bisim/git/Jacobi-MPI",
-        "file": "src/jacobi-parallel.c"
+        "directory": "./src",
+        "file": "jacobi-parallel.c"
     },
     {
         "arguments": [
@@ -128,7 +128,7 @@
             "-Werror=format-security",
             "lib/jacobi.c"
         ],
-        "directory": "/mnt/c/Users/bisim/git/Jacobi-MPI",
-        "file": "lib/jacobi.c"
+        "directory": "./lib",
+        "file": "jacobi.c"
     }
 ]
