@@ -275,7 +275,7 @@ elif [[ $TYPE == "parallel" ]]; then
     echo -e "Custom user password:\t$PASSWORD" | tee -a $OUTPUT
     echo -e "\nBe sure that $PEM_KEY is in ./scripts/key directory!" | tee -a $OUTPUT
     cd ./scripts
-    chmod +x ./make_cluster.sh
+    chmod +x ./make_cluster.sh ./state_cluster.sh
     ./make_cluster.sh $EC2_AMI $ROOT $EC2_SG $EC2_TYPE $KEY $CLUSTER_SIZE $USERNAME $PASSWORD
     cd ..
 
