@@ -3,7 +3,7 @@
  * @ingroup libraries
  * @author Simone Bisogno (bissim.github.io)
  * @brief Matrix utility functions.
- * @version 0.1.0-beta+20200402.0055
+ * @version 0.1.0-beta+20200403
  * @date 2020-02-07
  * 
  * @copyright Copyright (c) 2020
