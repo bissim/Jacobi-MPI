@@ -3,7 +3,7 @@
  * @ingroup headers
  * @author Simone Bisogno (bissim.github.io)
  * @brief Miscellaneous constants.
- * @version 0.1.0-beta+20200404
+ * @version 0.1.0-rc.1+20200405
  * @date 2020-02-07
  * 
  * @copyright Copyright (c) 2020
