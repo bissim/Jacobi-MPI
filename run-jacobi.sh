@@ -205,7 +205,7 @@ elif [[ $TYPE == "parallel" ]]; then
         echo "Starting dimension: $DIMENSION" | tee -a $OUTPUT
         # increase dimension to maxiumu value first
         for (( $NPROC = 2; $NPROC <= $NPROC_MAX; $NPROC = $NPROC * 2 )); do
-            DIMENSION=${DIMENSION}*2
+            let DIMENSION=$DIMENSION*2
         done
         MAX_DIM=$DIMENSION
 
@@ -227,7 +227,7 @@ elif [[ $TYPE == "parallel" ]]; then
                 mpiexec -np $NPROC --use-hwthread-cpus ./bin/$BINARY $DIMENSION $RESULTFILE"-l$WEAK_EXT" $DEBUG >> $OUTPUT
             done
             reduce ./data/$RESULTFILE"-l$WEAK_EXT" $NPROC
-            DIMENSION=${DIMENSION}*2
+            let DIMENSION=$DIMENSION*2
         done
         DIMENSION=$ORIGINAL_DIM
 
@@ -314,85 +314,121 @@ elif [[ $TYPE == "parallel" ]]; then
     HEADER="\"No. of processors\",\"Time\",\"TimeMin\",\"TimeMax\""
     echo "Sending results files to MASTER..." | tee -a $OUTPUT
     REMOTE_COMMAND="echo \"${HEADER}\" > ./${RESULTFILE}${STRONG_EXT}"
-    ssh -i ./scripts/key/$PEM_KEY $ROOT@$MASTER_IP $REMOTE_COMMAND
+    ssh -i ./scripts/key/$PEM_KEY $ROOT@$MASTER_IP $REMOTE_COMMAND &
     REMOTE_COMMAND="echo \"${HEADER}\" > ./${RESULTFILE}${WEAK_EXT}"
-    ssh -i ./scripts/key/$PEM_KEY $ROOT@$MASTER_IP $REMOTE_COMMAND
-    REMOTE_COMMAND="sudo mv ${RESULTFILE}*.csv /home/$USERNAME/"
+    ssh -i ./scripts/key/$PEM_KEY $ROOT@$MASTER_IP $REMOTE_COMMAND &
+    wait
+    REMOTE_COMMAND="sudo chmod 666 ${RESULTFILE}-s.csv"
+    ssh -i ./scripts/key/$PEM_KEY $ROOT@$MASTER_IP $REMOTE_COMMAND &
+    REMOTE_COMMAND="sudo chmod 666 ${RESULTFILE}-w.csv"
+    ssh -i ./scripts/key/$PEM_KEY $ROOT@$MASTER_IP $REMOTE_COMMAND &
+    wait
+    REMOTE_COMMAND="sudo mv ${RESULTFILE}-*.csv /home/$USERNAME/"
     ssh -i ./scripts/key/$PEM_KEY $ROOT@$MASTER_IP $REMOTE_COMMAND
 
     # run parallel program for strong scaling
     # fixed dimension, doubling number of processes
-    echo -e "\nRunning strong scaling test for $BINARY..." | tee -a $OUTPUT
-    echo "Starting dimension: $DIMENSION" | tee -a $OUTPUT
+    ORIGINAL_DIM=$DIMENSION
     HOSTFILE="hostfile"
-    NPROC=2
-    for (( I = 1; I <= $ITERATIONS; I++ )); do
-        echo "Iteration $I of $BINARY, strong scaling" | tee -a $OUTPUT
-        REMOTE_COMMAND="sudo -u $USERNAME mpiexec -np $NPROC"
-        REMOTE_COMMAND="${REMOTE_COMMAND} --hostfile /home/$USERNAME/$HOSTFILE"
-        REMOTE_COMMAND="${REMOTE_COMMAND} /home/$USERNAME/$BINARY $DIMENSION"
-        REMOTE_COMMAND="${REMOTE_COMMAND} /home/$USERNAME/${RESULTFILE}${STRONG_EXT}"
-        echo "Executing $REMOTE_COMMAND"
-        SSH="ssh -i ./scripts/key/$PEM_KEY $ROOT@$MASTER_IP $REMOTE_COMMAND"
-        echo "Executing $SSH $MEASUREITERATIONS times"
-        # run the same command few times to get estimation
-        for (( J = 0; J < $MEASUREITERATIONS; J++ )); do
-            ssh -i ./scripts/key/$PEM_KEY $ROOT@$MASTER_IP $REMOTE_COMMAND
+    echo | tee -a $OUTPUT
+    read -p "Do you want to perform strong scaling test? (Yes/No) " CHOICE
+    if [[ $CHOICE == "y" ]] || [[ $CHOICE == "Y" ]]; then
+        echo -e "Running strong scaling test for $BINARY..." | tee -a $OUTPUT
+        NPROC=2
+        # increase dimension to maximum value first
+        for (( i = 1; i < $ITERATIONS; i++ )); do
+            let DIMENSION=$DIMENSION*2
         done
+        echo "Dimension: $DIMENSION" | tee -a $OUTPUT
+        echo "Starting processes: $NPROC" | tee -a $OUTPUT
 
-        # reduce results at every iteration
-        # download, reduce, upload
-        # stupid but quick and effective right now
-        echo "Reducing results file for strong scaling..." | tee -a $OUTPUT
-        REMOTE_COMMAND="sudo mv /home/$USERNAME/${RESULTFILE}*.csv ."
+        for (( I = 1; I < $ITERATIONS; I++ )); do
+            echo "Iteration $I of $BINARY, strong scaling" | tee -a $OUTPUT
+            REMOTE_COMMAND="sudo -u $USERNAME mpiexec -np $NPROC --use-hwthread-cpus"
+            REMOTE_COMMAND="${REMOTE_COMMAND} --hostfile /home/$USERNAME/$HOSTFILE"
+            REMOTE_COMMAND="${REMOTE_COMMAND} /home/$USERNAME/$BINARY $DIMENSION"
+            REMOTE_COMMAND="${REMOTE_COMMAND} /home/$USERNAME/${RESULTFILE}${STRONG_EXT}"
+            echo "Executing $REMOTE_COMMAND" >> $OUTPUT
+            SSH="ssh -i ./scripts/key/$PEM_KEY $ROOT@$MASTER_IP $REMOTE_COMMAND"
+            echo "Executing $SSH $MEASUREITERATIONS times" >> $OUTPUT
+            # run the same command few times to get estimation
+            for (( J = 0; J < $MEASUREITERATIONS; J++ )); do
+                sleep 1
+                eval $SSH
+                sleep 1
+            done
+
+            # reduce results at every iteration
+            # download, reduce, upload
+            # stupid but quick and effective right now
+            echo "Reducing results file for strong scaling..." | tee -a $OUTPUT
+            REMOTE_COMMAND="sudo mv /home/$USERNAME/${RESULTFILE}${STRONG_EXT} ."
+            ssh -i ./scripts/key/$PEM_KEY $ROOT@$MASTER_IP $REMOTE_COMMAND
+            scp -i ./scripts/key/$PEM_KEY $ROOT@$MASTER_IP:$RESULTFILE"$STRONG_EXT" ./data/
+            reduce ./data/$RESULTFILE"$STRONG_EXT" $NPROC
+            scp -i ./scripts/key/$PEM_KEY ./data/$RESULTFILE"$STRONG_EXT" $ROOT@$MASTER_IP:
+            REMOTE_COMMAND="sudo mv ./${RESULTFILE}${STRONG_EXT} /home/$USERNAME/"
+            ssh -i ./scripts/key/$PEM_KEY $ROOT@$MASTER_IP $REMOTE_COMMAND
+
+            # it's strong scaling, so doubling nproc
+            let NPROC=$NPROC*2
+        done
+        # retrieve strong scaling tests results
+        REMOTE_COMMAND="sudo mv /home/$USERNAME/${RESULTFILE}${STRONG_EXT} ."
         ssh -i ./scripts/key/$PEM_KEY $ROOT@$MASTER_IP $REMOTE_COMMAND
-        scp -i ./scripts/key/$PEM_KEY $ROOT@$MASTER_IP:$RESULTFILE"$STRONG_EXT" ./$RESULTFILE"$STRONG_EXT"
-        reduce ./data/$RESULTFILE"$STRONG_EXT" $NPROC
-        scp -i ./scripts/key/$PEM_KEY ./data/$RESULTFILE"$STRONG_EXT" $ROOT@$MASTER_IP:$RESULTFILE"$STRONG_EXT"
-
-        # it's strong scaling, so doubling nproc
-        NPROC=${NPROC}*2
-    done
-    # retrieve strong scaling tests results
-    scp -i ./scripts/key/$PEM_KEY $ROOT@$MASTER_IP:$RESULTFILE"$STRONG_EXT" ./$RESULTFILE"$STRONG_EXT"
+        scp -i ./scripts/key/$PEM_KEY $ROOT@$MASTER_IP:$RESULTFILE"$STRONG_EXT" ./data/
+    fi
 
     # run parallel program for weak scaling
     # doubling both dimension and number of processes
-    echo -e "\nRunning weak scaling test for $BINARY..." | tee -a $OUTPUT
-    echo "Starting dimension: $DIMENSION" | tee -a $OUTPUT
-    NPROC=2
-    for (( I = 1; I <= $ITERATIONS; I++ )); do
-        echo "Iteration $I of $BINARY, weak scaling"
-        REMOTE_COMMAND="sudo -u $USERNAME mpiexec -np $NPROC"
-        REMOTE_COMMAND="${REMOTE_COMMAND} --hostfile /home/$USERNAME/$HOSTFILE"
-        REMOTE_COMMAND="${REMOTE_COMMAND} /home/$USERNAME/$BINARY $DIMENSION"
-        REMOTE_COMMAND="${REMOTE_COMMAND} /home/$USERNAME/${RESULTFILE}${WEAK_EXT}"
-        echo "Executing $REMOTE_COMMAND"
-        #SSH="ssh -i ./scripts/key/$PEM_KEY $ROOT@$MASTER_IP $REMOTE_COMMAND"
-        echo "Executing $SSH $MEASUREITERATIONS times"
-        # run the same command few times to get estimation
-        for (( J = 0; J < $MEASUREITERATIONS; J++ )); do
-            $SSH
+    DIMENSION=$ORIGINAL_DIM
+    echo | tee -a $OUTPUT
+    read -p "Do you want to perform weak scaling test? (Yes/No) " CHOICE
+    if [[ $CHOICE == "y" ]] || [[ $CHOICE == "Y" ]]; then
+        echo -e "Running weak scaling test for $BINARY..." | tee -a $OUTPUT
+        echo "Starting dimension: $DIMENSION" | tee -a $OUTPUT
+        NPROC=2
+        for (( I = 1; I < $ITERATIONS; I++ )); do
+            echo "Iteration $I of $BINARY, weak scaling"
+            REMOTE_COMMAND="sudo -u $USERNAME mpiexec -np $NPROC --use-hwthread-cpus"
+            REMOTE_COMMAND="${REMOTE_COMMAND} --hostfile /home/$USERNAME/$HOSTFILE"
+            REMOTE_COMMAND="${REMOTE_COMMAND} /home/$USERNAME/$BINARY $DIMENSION"
+            REMOTE_COMMAND="${REMOTE_COMMAND} /home/$USERNAME/${RESULTFILE}${WEAK_EXT}"
+            echo "Executing $REMOTE_COMMAND" >> $OUTPUT
+            SSH="ssh -i ./scripts/key/$PEM_KEY $ROOT@$MASTER_IP $REMOTE_COMMAND"
+            echo "Executing $SSH $MEASUREITERATIONS times" >> $OUTPUT
+            # run the same command few times to get estimation
+            for (( J = 0; J < $MEASUREITERATIONS; J++ )); do
+                sleep 1
+                eval $SSH
+                sleep 1
+            done
+
+            # reduce results at every iteration
+            # download, reduce, upload
+            # stupid but quick and effective right now
+            echo "Reducing results for weak scaling..." | tee -a $OUTPUT
+            REMOTE_COMMAND="sudo mv /home/$USERNAME/${RESULTFILE}${WEAK_EXT} ."
+            ssh -i ./scripts/key/$PEM_KEY $ROOT@$MASTER_IP $REMOTE_COMMAND
+            scp -i ./scripts/key/$PEM_KEY $ROOT@$MASTER_IP:$RESULTFILE"$WEAK_EXT" ./data/
+            reduce ./data/$RESULTFILE"$WEAK_EXT" $NPROC
+            scp -i ./scripts/key/$PEM_KEY ./data/$RESULTFILE"$WEAK_EXT" $ROOT@$MASTER_IP:
+            REMOTE_COMMAND="sudo mv ./${RESULTFILE}${WEAK_EXT} /home/$USERNAME/"
+            ssh -i ./scripts/key/$PEM_KEY $ROOT@$MASTER_IP $REMOTE_COMMAND
+
+            # it's weak scaling, so doubling both nproc and input dimension
+            let NPROC=$NPROC*2
+            let DIMENSION=$DIMENSION*2
         done
-
-        # reduce results at every iteration
-        # download, reduce, upload
-        # stupid but quick and effective right now
-        echo "Reducing results for weak scaling..." | tee -a $OUTPUT
-        scp -i ./scripts/key/$PEM_KEY $ROOT@$MASTER_IP:$RESULTFILE"$WEAK_EXT" ./data/$RESULTFILE"$WEAK_EXT"
-        reduce ./data/$RESULTFILE"$WEAK_EXT" $NPROC
-        scp -i ./scripts/key/$PEM_KEY ./data/$RESULTFILE"$WEAK_EXT" $ROOT@$MASTER_IP:$RESULTFILE"$WEAK_EXT"
-
-        # it's weak scaling, so doubling both nproc and input dimension
-        NPROC=${NPROC}*2
-        DIMENSION=${DIMENSION}*2
-    done
-    # retrieve weak scaling tests results
-    scp -i ./scripts/key/$PEM_KEY $ROOT@$MASTER_IP:$RESULTFILE"$WEAK_EXT" ./data/$RESULTFILE"$WEAK_EXT"
+        # retrieve weak scaling tests results
+        REMOTE_COMMAND="sudo mv ./${RESULTFILE}${WEAK_EXT} /home/$USERNAME/"
+        ssh -i ./scripts/key/$PEM_KEY $ROOT@$MASTER_IP $REMOTE_COMMAND
+        scp -i ./scripts/key/$PEM_KEY $ROOT@$MASTER_IP:$RESULTFILE"$WEAK_EXT" ./data/
+    fi
 
     # terminate cluster
     echo -e "\nTerminating cluster (a prompt may appear, press 'q')..." | tee -a $OUTPUT
-    ./scripts/state_cluster stop # TODO replace with 'terminate'
+    ./scripts/state_cluster.sh stop # TODO replace with 'terminate'
 fi
 echo -e "\n\t#####" >> $OUTPUT
 
