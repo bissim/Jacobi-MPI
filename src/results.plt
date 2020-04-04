@@ -5,8 +5,11 @@ script = ARG0
 results = ARG1
 type = ARG2
 
-# fallback to default dataset file if provided one doesn't exist
-if (!exists("results")) results='results.csv'
+# check whether dataset file doesn't exist
+if (!exists("results")) {
+    print "Unable to find provided results file: ", results
+    exit
+}
 
 print "Running ", script, " over ", results
 
@@ -22,32 +25,65 @@ xspan = GPVAL_DATA_X_MAX - GPVAL_DATA_X_MIN
 yspan = GPVAL_DATA_Y_MAX - GPVAL_DATA_Y_MIN
 
 # define axis units
-xequiv = 200
-yequiv = 5
+if (type eq "serial") {
+    xequiv = 350
+    yequiv = 5
+} else {
+    if (type eq "parallel strong scaling") {
+        xequiv = 1
+        yequiv = 8
+    } else {
+        if (type eq "parallel weak scaling") {
+            xequiv = 4
+            yequiv = 1
+        } else {
+            print "Unknown type: ", type
+            exit
+        }
+    }
+}
 
 # aspect ratio
 ar = yspan/xspan * xequiv/yequiv
 
 # plot dimensions
-ydim = 1200
+ydim = 800
 xdim = ydim/ar
 
 # set x and y tic intervals
-set xtics 200 rotate by -45
-set ytics 5
+if (type eq "serial") {
+    set xtics 1024 rotate by -45
+    set ytics 10
+} else {
+    if (type eq "parallel strong scaling") {
+        set xtics 2 rotate by -45
+        set ytics 10
+    } else {
+        if (type eq "parallel weak scaling") {
+            set xtics 2 rotate by -45
+            set ytics 0.5
+        }
+    }
+}
 
 # set x and y ranges
 set xrange [GPVAL_DATA_X_MIN:GPVAL_DATA_X_MAX]
 set yrange [GPVAL_DATA_Y_MIN:GPVAL_DATA_Y_MAX]
 
 # format y labels
-set format y "%.3f"
+if (type eq "parallel weak scaling") {
+    set format y "%.1f"
+}
 
 # set plot title and labels
 plotTitle = "Relaxed Jacobi (" . type . ")"
-set title plotTitle font ",20" tc rgb "#606060"
+set title plotTitle font ",32" tc rgb "#606060"
 set key left box autotitle columnhead
-set xlabel "Matrix size (n times n)"
+if (type eq "serial") {
+    set xlabel "Matrix size (n times n)"
+} else {
+    set xlabel "Number of processors"
+}
 set ylabel "Time (s)"
 
 # grid style
@@ -71,7 +107,7 @@ plot results ls 2, \
 plotImageName = "./doc/img/results-" . type . ".png"
 print "Saving plot to " . plotImageName . " as a " . sprintf("%d", xdim) . "x" \
     . sprintf("%d", ydim) . " image..."
-set terminal pngcairo nocrop enhanced font "Lato-Medium,8" size xdim,ydim
+set terminal pngcairo nocrop enhanced font "Lato-Medium,18" size xdim,ydim
 set output plotImageName
 set size ratio ar
 
