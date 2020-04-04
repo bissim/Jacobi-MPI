@@ -242,22 +242,29 @@ elif [[ $TYPE == "parallel" ]]; then
     echo -e "\nRunning in parallel over a cluster of $CLUSTER_SIZE instances" | tee -a $OUTPUT
 
     # copy AWS Build Cluster Script in some subfolder
-    if [[ -e ./aws-build-cluster-script/ ]]; then
-        rm -r ./aws-build-cluster-script/
+    # if [[ -e ./aws-build-cluster-script/ ]]; then
+    #     rm -r ./aws-build-cluster-script/
+    # fi
+    # git clone https://github.com/bissim/aws-build-cluster-script.git
+    # rm -rf ./aws-build-cluster-script/.git/
+    # if [[ -e ./scripts/ ]]; then
+    #     rm -rf ./scripts/
+    # fi
+    # mv ./aws-build-cluster-script ./scripts
+    if [[ ! -e ./scripts/ ]]; then
+        git clone https://github.com/bissim/aws-build-cluster-script.git
+        rm -rf ./aws-build-cluster-script/.git/
+        mv ./aws-build-cluster-script ./scripts
     fi
-    git clone https://github.com/bissim/aws-build-cluster-script.git
-    rm -rf ./aws-build-cluster-script/.git/
-    if [[ -e ./scripts/ ]]; then
-        rm -rf ./scripts/
-    fi
-    mv ./aws-build-cluster-script ./scripts
 
     # copy existing EC2 key
     KEY="pcpc-key"
     PEM_KEY="${KEY}.pem"
-    read -p "Path to EC2 key: " KEY_PATH
-    cp $KEY_PATH ./scripts/key/$PEM_KEY
-    chmod 400 ./scripts/key/*.pem
+    if [[ ! -e ./scripts/key/$PEM_KEY ]]; then
+        read -p "Path to EC2 key: " KEY_PATH
+        cp $KEY_PATH ./scripts/key/$PEM_KEY
+        chmod 400 ./scripts/key/*.pem
+    fi
 
     # create cluster
     EC2_AMI="ami-07ebfd5b3428b6f4d"
@@ -266,19 +273,23 @@ elif [[ $TYPE == "parallel" ]]; then
     ROOT="ubuntu"
     USERNAME="pcpc"
     PASSWORD="pcpc-test"
-    echo -e "\nCreating a $CLUSTER_SIZE nodes cluster with following features:" | tee -a $OUTPUT
-    echo -e "AMI:\t$EC2_AMI" | tee -a $OUTPUT
-    echo -e "Security group:\t$EC2_SG" | tee -a $OUTPUT
-    echo -e "Instance type:\t$EC2_TYPE" | tee -a $OUTPUT
-    echo -e "Key:\t$KEY" | tee -a $OUTPUT
-    echo -e "Instance root user:\t$ROOT" | tee -a $OUTPUT
-    echo -e "Custom user name:\t$USERNAME" | tee -a $OUTPUT
-    echo -e "Custom user password:\t$PASSWORD" | tee -a $OUTPUT
-    echo -e "\nBe sure that $PEM_KEY is in ./scripts/key directory!" | tee -a $OUTPUT
-    cd ./scripts
-    chmod +x ./make_cluster.sh ./state_cluster.sh
-    ./make_cluster.sh $EC2_AMI $ROOT $EC2_SG $EC2_TYPE $KEY $CLUSTER_SIZE $USERNAME $PASSWORD
-    cd ..
+    echo
+    read -p "Do you want to create a new cluster or use an existing one? N(ew)/E(xisting): " CHOICE
+    if [[ $CHOICE == "n"  ]] || [[ $CHOICE == "N" ]]; then
+        echo -e "\nCreating a $CLUSTER_SIZE nodes cluster with following features:" | tee -a $OUTPUT
+        echo -e "AMI:\t$EC2_AMI" | tee -a $OUTPUT
+        echo -e "Security group:\t$EC2_SG" | tee -a $OUTPUT
+        echo -e "Instance type:\t$EC2_TYPE" | tee -a $OUTPUT
+        echo -e "Key:\t$KEY" | tee -a $OUTPUT
+        echo -e "Instance root user:\t$ROOT" | tee -a $OUTPUT
+        echo -e "Custom user name:\t$USERNAME" | tee -a $OUTPUT
+        echo -e "Custom user password:\t$PASSWORD" | tee -a $OUTPUT
+        echo -e "\nBe sure that $PEM_KEY is in ./scripts/key directory!" | tee -a $OUTPUT
+        cd ./scripts
+        chmod +x ./make_cluster.sh ./state_cluster.sh
+        ./make_cluster.sh $EC2_AMI $ROOT $EC2_SG $EC2_TYPE $KEY $CLUSTER_SIZE $USERNAME $PASSWORD
+        cd ..
+    fi
 
     # send preparation script to master and run it
     #. ./scripts/data/ip_private_list.array
@@ -292,7 +303,7 @@ elif [[ $TYPE == "parallel" ]]; then
     REMOTE_COMMAND="chmod +x $DEPLOY_SCRIPT &&"
     REMOTE_COMMAND="${REMOTE_COMMAND} ./$DEPLOY_SCRIPT -k $PEM_KEY -R $ROOT"
     REMOTE_COMMAND="${REMOTE_COMMAND} -u $USERNAME -p $PASSWORD -n $CLUSTER_SIZE -M"
-    REMOTE_COMMAND="${REMOTE_COMMAND} -P $BINARY -d $DIMENSION"
+    REMOTE_COMMAND="${REMOTE_COMMAND} -P $BINARY"
 
     # install dependencies over cluster
     echo -e "\nExecuting $DEPLOY_SCRIPT on MASTER..." | tee -a $OUTPUT
@@ -301,23 +312,29 @@ elif [[ $TYPE == "parallel" ]]; then
     # set results files header
     echo -e "\nSetting results file headers..." | tee -a $OUTPUT
     HEADER="\"No. of processors\",\"Time\",\"TimeMin\",\"TimeMax\""
-    echo "Sending header files to MASTER..." | tee -a $OUTPUT
+    echo "Sending results files to MASTER..." | tee -a $OUTPUT
     REMOTE_COMMAND="echo \"${HEADER}\" > ./${RESULTFILE}${STRONG_EXT}"
     ssh -i ./scripts/key/$PEM_KEY $ROOT@$MASTER_IP $REMOTE_COMMAND
     REMOTE_COMMAND="echo \"${HEADER}\" > ./${RESULTFILE}${WEAK_EXT}"
+    ssh -i ./scripts/key/$PEM_KEY $ROOT@$MASTER_IP $REMOTE_COMMAND
+    REMOTE_COMMAND="sudo mv ${RESULTFILE}*.csv /home/$USERNAME/"
     ssh -i ./scripts/key/$PEM_KEY $ROOT@$MASTER_IP $REMOTE_COMMAND
 
     # run parallel program for strong scaling
     # fixed dimension, doubling number of processes
     echo -e "\nRunning strong scaling test for $BINARY..." | tee -a $OUTPUT
     echo "Starting dimension: $DIMENSION" | tee -a $OUTPUT
+    HOSTFILE="hostfile"
     NPROC=2
     for (( I = 1; I <= $ITERATIONS; I++ )); do
         echo "Iteration $I of $BINARY, strong scaling" | tee -a $OUTPUT
         REMOTE_COMMAND="sudo -u $USERNAME mpiexec -np $NPROC"
         REMOTE_COMMAND="${REMOTE_COMMAND} --hostfile /home/$USERNAME/$HOSTFILE"
-        REMOTE_COMMAND="${REMOTE_COMMAND} /home/$USERNAME/$PROGRAM $PROGRAM_DIM"
+        REMOTE_COMMAND="${REMOTE_COMMAND} /home/$USERNAME/$BINARY $DIMENSION"
         REMOTE_COMMAND="${REMOTE_COMMAND} /home/$USERNAME/${RESULTFILE}${STRONG_EXT}"
+        echo "Executing $REMOTE_COMMAND"
+        SSH="ssh -i ./scripts/key/$PEM_KEY $ROOT@$MASTER_IP $REMOTE_COMMAND"
+        echo "Executing $SSH $MEASUREITERATIONS times"
         # run the same command few times to get estimation
         for (( J = 0; J < $MEASUREITERATIONS; J++ )); do
             ssh -i ./scripts/key/$PEM_KEY $ROOT@$MASTER_IP $REMOTE_COMMAND
@@ -327,7 +344,9 @@ elif [[ $TYPE == "parallel" ]]; then
         # download, reduce, upload
         # stupid but quick and effective right now
         echo "Reducing results file for strong scaling..." | tee -a $OUTPUT
-        scp -i ./scripts/key/$PEM_KEY $ROOT@$MASTER_IP:$RESULTFILE"$STRONG_EXT" ./data/$RESULTFILE"$STRONG_EXT"
+        REMOTE_COMMAND="sudo mv /home/$USERNAME/${RESULTFILE}*.csv ."
+        ssh -i ./scripts/key/$PEM_KEY $ROOT@$MASTER_IP $REMOTE_COMMAND
+        scp -i ./scripts/key/$PEM_KEY $ROOT@$MASTER_IP:$RESULTFILE"$STRONG_EXT" ./$RESULTFILE"$STRONG_EXT"
         reduce ./data/$RESULTFILE"$STRONG_EXT" $NPROC
         scp -i ./scripts/key/$PEM_KEY ./data/$RESULTFILE"$STRONG_EXT" $ROOT@$MASTER_IP:$RESULTFILE"$STRONG_EXT"
 
@@ -335,7 +354,7 @@ elif [[ $TYPE == "parallel" ]]; then
         NPROC=${NPROC}*2
     done
     # retrieve strong scaling tests results
-    scp -i ./scripts/key/$PEM_KEY $ROOT@$MASTER_IP:$RESULTFILE"$STRONG_EXT" ./data/$RESULTFILE"$STRONG_EXT"
+    scp -i ./scripts/key/$PEM_KEY $ROOT@$MASTER_IP:$RESULTFILE"$STRONG_EXT" ./$RESULTFILE"$STRONG_EXT"
 
     # run parallel program for weak scaling
     # doubling both dimension and number of processes
@@ -346,11 +365,14 @@ elif [[ $TYPE == "parallel" ]]; then
         echo "Iteration $I of $BINARY, weak scaling"
         REMOTE_COMMAND="sudo -u $USERNAME mpiexec -np $NPROC"
         REMOTE_COMMAND="${REMOTE_COMMAND} --hostfile /home/$USERNAME/$HOSTFILE"
-        REMOTE_COMMAND="${REMOTE_COMMAND} /home/$USERNAME/$PROGRAM $PROGRAM_DIM"
+        REMOTE_COMMAND="${REMOTE_COMMAND} /home/$USERNAME/$BINARY $DIMENSION"
         REMOTE_COMMAND="${REMOTE_COMMAND} /home/$USERNAME/${RESULTFILE}${WEAK_EXT}"
+        echo "Executing $REMOTE_COMMAND"
+        #SSH="ssh -i ./scripts/key/$PEM_KEY $ROOT@$MASTER_IP $REMOTE_COMMAND"
+        echo "Executing $SSH $MEASUREITERATIONS times"
         # run the same command few times to get estimation
         for (( J = 0; J < $MEASUREITERATIONS; J++ )); do
-            ssh -i ./scripts/key/$PEM_KEY $ROOT@$MASTER_IP $REMOTE_COMMAND
+            $SSH
         done
 
         # reduce results at every iteration

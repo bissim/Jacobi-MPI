@@ -75,36 +75,58 @@ while [[ "${1-0}" =~ ^- && ! "${1-0}" == "--" ]]; do
 done
 
 #
+# distribute script to nodes ASAP
+#
+if (( $IS_MASTER == 1 )); then
+    echo -e "\nPropagating $SCRIPT_NAME to other nodes..."
+    for (( i=1; i<$CLUSTER_DIM; i++ )); do
+        # first, send the script
+        echo -e "\nCopying $SCRIPT_NAME on NODE_$i..."
+        sudo cp ./$SCRIPT_NAME /home/$USERNAME/
+        sudo -u $USERNAME scp -oStrictHostKeyChecking=no /home/$USERNAME/$SCRIPT_NAME $USERNAME@NODE_${i}:~
+
+        # then, execute it
+        echo -e "\nRunning $SCRIPT_NAME on NODE_$i..."
+        REMOTE_COMMAND="/home/$USERNAME/${SCRIPT_NAME} -R $ROOT -u $USERNAME -p $PASSWORD"
+        ssh -oStrictHostKeyChecking=no -i $PEM_KEY $ROOT@NODE_${i} "$REMOTE_COMMAND" &
+    done
+fi
+
+#
 # update remote repositories
 #
 echo -e "\nUpdate repositories"
-sudo add-apt-repository universe
+#sudo add-apt-repository universe
 sudo apt update #&& sudo apt upgrade -y
 
 #
 # install build essential to build OpenMPI
-# install alien for later use by everyone
 #
 echo -e "\nInstall dependencies"
-sudo apt install build-essential alien -y
+sudo apt install build-essential -y
 
-#
-# download and extract OpenMPI source code
-#
-wget "$OPENMPI_URL" -O ./$OPENMPI_ARCHIVE && tar -xzf ./$OPENMPI_ARCHIVE
-#wget "$OPENMPI_RPM_URL" -O ./$OPENMPI_RPM
+if [[ ! -e /usr/local/bin/mpiexec ]]; then
+    echo "OpenMPI 4 not installed, downloading and installing..."
 
-#
-# configure, build and install OpenMPI
-# note: this won't work on t2.micro instances!
-#
-# compile from binaries
-cd ./openmpi-${OPENMPI_VERSION}/
-./configure --prefix="/usr/local"
-make -j && sudo make install && sudo ldconfig
-cd ..
+    #
+    # download and extract OpenMPI source code
+    #
+    wget "$OPENMPI_URL" -O ./$OPENMPI_ARCHIVE && tar -xzf ./$OPENMPI_ARCHIVE
+    #wget "$OPENMPI_RPM_URL" -O ./$OPENMPI_RPM
+
+    #
+    # configure, build and install OpenMPI
+    # note: this won't work on t2.micro instances!
+    #
+    # compile from binaries
+    cd ./openmpi-${OPENMPI_VERSION}/
+    ./configure --prefix="/usr/local"
+    make -j && sudo make install && sudo ldconfig
+    cd ..
+fi
 # install from APT
 #sudo apt install openmpi-bin libopenmpi-dev -y
+#sudo cp ... /usr/include/mpi/
 # install from RPT package
 #sudo alien ${OPENMPI_RPM}
 #sudo dpkg -i ${OPENMPI_RPM_NAME}.deb
@@ -146,13 +168,15 @@ if (( $IS_MASTER == 1 )); then
     # install Clang
     #
     echo -e "\nInstall Clang"
-    sudo apt update && sudo apt install clang -y
+    sudo apt clean
+    sudo apt update
+    sudo apt install clang -y
 
     #
     # clone and compile project
     #
     if [[ -e ./Jacobi-MPI/ ]]; then
-        rm -r ./Jacobi-MPI/
+        rm -rf ./Jacobi-MPI/
     fi
     git clone "$JACOBI_MPI_REPOSITORY.git"
     cd Jacobi-MPI/
@@ -209,34 +233,18 @@ if (( $IS_MASTER == 1 )); then
     if [[ -e $HOSTFILE ]]; then
         > $HOSTFILE
     fi
-    for private_ip in "${#ip_private_list[@]}"; do
+    for private_ip in ${ip_private_list[@]}; do
         echo $private_ip >> $HOSTFILE
     done
-    sudo mv $HOSTFILE /home/$USERNAME/$HOSTFILE
+    sudo cp $HOSTFILE /home/$USERNAME/$HOSTFILE
 
     #
     # copy user keys to send and run scripts remotely
     #
-    echo -e "\nCopying $USERNAME key to communicate with oher nodes..."
+    echo -e "\nCopying $USERNAME key to communicate with other nodes..."
     sudo cp /home/pcpc/.ssh/id_rsa .ssh/
     sudo cp /home/pcpc/.ssh/id_rsa.pub .ssh/
     sudo chown $ROOT:root .ssh/id_rsa .ssh/id_rsa.pub
-
-    #
-    # propagate this script to every slave node
-    #
-    echo -e "\nPropagating $SCRIPT_NAME to other nodes..."
-    for (( i=1; i<$CLUSTER_DIM; i++ )); do
-        # first, send the script
-        echo -e "\nCopying $SCRIPT_NAME on NODE_$i..."
-        sudo cp ./$SCRIPT_NAME /home/$USERNAME/
-        sudo -u $USERNAME scp -oStrictHostKeyChecking=no /home/$USERNAME/$SCRIPT_NAME $USERNAME@NODE_${i}:~
-
-        # then, execute it
-        echo -e "\nRunning $SCRIPT_NAME on NODE_$i..."
-        REMOTE_COMMAND="/home/$USERNAME/${SCRIPT_NAME} -R $ROOT -u $USERNAME -p $PASSWORD"
-        ssh -oStrictHostKeyChecking=no -i $PEM_KEY $ROOT@NODE_${i} "$REMOTE_COMMAND" &
-    done
 
     #
     # wait for nodes preparation running in background
