@@ -100,7 +100,8 @@ set style line 4 lw 1 lc rgb "red" dt 4
 
 # plot provided data with specified settings
 plot results ls 2, \
-    "" notitle with yerrorbars ls 3#, \
+    "" notitle with yerrorbars ls 3, \
+    results using 1:2:(sprintf("%.2f", $2)) with labels offset char 1, 1 notitle#, \
 #    "" smooth bezier title "Bezier" with lines ls 4
 
 # save plot to image
