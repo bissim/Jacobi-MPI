@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      OPENMPI_VERSION: 4.0.2
+      OPENMPI_VERSION: 4.0.3
     steps:
     - name: Download OpenMPI
       run: wget https://download.open-mpi.org/release/open-mpi/v4.0/openmpi-${OPENMPI_VERSION}.tar.gz
