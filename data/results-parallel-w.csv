@@ -1,4 +1,4 @@
-No. of processors,Time,TimeMin,TimeMax
+"No. of processors","Time Median","Time Min","Time Max"
 2,0.113224,0.113042,0.114272
 4,0.239395,0.239152,0.246495
 8,0.696980,0.694002,0.700949
