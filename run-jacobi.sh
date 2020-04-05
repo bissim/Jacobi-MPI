@@ -476,6 +476,8 @@ else
         echo "-----" >> $GPTLOG
         gnuplot -c $RESULTPLOT ./data/$RESULTFILE"$STRONG_EXT" $TYPE" strong scaling" 2>> $GPTLOG
         echo -e "\n-----" >> $GPTLOG
+        # fix spaces in plots names for parallel results
+        find ./doc/img/ -name 'results-parallel*.png' -execdir bash -c 'mv -- "$1" "${1// /-}"' bash {} \;
         echo "Plots saved!" | tee -a $OUTPUT
     fi
 fi
