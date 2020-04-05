@@ -1,4 +1,4 @@
-name: C Make
+name: Build
 
 on: [push]
 
