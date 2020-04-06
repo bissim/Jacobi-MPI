@@ -177,7 +177,7 @@ if [[ $TYPE == "serial" ]]; then
     # run jacobi-serial
     #
     RESULTFILE="${RESULTFILE}.csv"
-    echo "\"Size\",\"Time\",\"TimeMin\",\"TimeMax\"" > ./data/$RESULTFILE
+    echo "\"Size\",\"TimeMedian\",\"TimeMin\",\"TimeMax\"" > ./data/$RESULTFILE
     for (( I = 1; I <= $ITERATIONS; I++ )); do
         echo "$DIMENSION x $DIMENSION matrix"
         echo -e "\tBEGIN ITERATION $I FOR $DIMENSION x $DIMENSION MATRIX\n" >> $OUTPUT
@@ -198,7 +198,7 @@ elif [[ $TYPE == "parallel" ]]; then
     if (( $NPROC_MAX >= 8 )); then
         echo -e "\nPerforming local scaling tests..." | tee -a $OUTPUT
         ORIGINAL_DIM=$DIMENSION
-        HEADER="\"No. of processors\",\"Time\",\"TimeMin\",\"TimeMax\""
+        HEADER="\"Processors\",\"TimeMedian\",\"TimeMin\",\"TimeMax\""
 
         # strong scaling local test
         echo -e "\nLocal strong scaling test..." | tee -a $OUTPUT
@@ -311,7 +311,7 @@ elif [[ $TYPE == "parallel" ]]; then
 
     # set results files header
     echo -e "\nSetting results file headers..." | tee -a $OUTPUT
-    HEADER="\"No. of processors\",\"Time\",\"TimeMin\",\"TimeMax\""
+    HEADER="\"Processors\",\"TimeMedian\",\"TimeMin\",\"TimeMax\""
     echo "Sending results files to MASTER..." | tee -a $OUTPUT
     REMOTE_COMMAND="echo \"${HEADER}\" > ./${RESULTFILE}${STRONG_EXT}"
     ssh -i ./scripts/key/$PEM_KEY $ROOT@$MASTER_IP $REMOTE_COMMAND &

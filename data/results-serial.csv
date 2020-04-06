@@ -1,4 +1,4 @@
-"Size","Time Median","Time Min","Time Max"
+"Size","TimeMedian","TimeMin","TimeMax"
 512,0.072773,0.071476,0.072957
 1024,0.289759,0.287860,0.294446
 2048,2.163317,2.145097,2.185641
