@@ -4,7 +4,7 @@
  * @ingroup libraries
  * @author Simone Bisogno (bissim.github.io)
  * @brief Jacobi method functions.
- * @version 0.1.0-rc.2+20200405
+ * @version 0.1.0-rc.3+20200406
  * @date 2020-02-04
  * 
  * @copyright Copyright (c) 2020
