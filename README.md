@@ -184,7 +184,7 @@ The `m4.xlarge` instances have the following specifications, according to [offic
 
 An optional test has been performed on a purely sequential version of Jacobi relaxation to compare it with its parallel implementation on a M4 instance.
 
-Running `jacobi-serial` five times starting from _512_ rows, each time doubling it, we can observe an exponential increase in execution time.
+Running `jacobi-serial` five times starting from _512_ rows, each time doubling it, we can observe an exponential increase in execution time. In the following table with execution times for problem size, _time is expressed in seconds_.
 
 | Dimension |  Time Median  |   Time Min   |   Time Max   |
 |:---------:|:-------------:|:------------:|:------------:|
@@ -213,7 +213,7 @@ To check for effective utility of using a parallelised version of Jacobi relaxed
 
 With **strong scaling** test, we check how program scales by increasing number of active processors by _keeping the problem size fixed_.
 
-Running `jacobi-parallel` with 16386 rows and starting from 2 processors, each time doubling it, we can observe that execution time drops significally.
+Running `jacobi-parallel` with 16386 rows and starting from 2 processors, each time doubling it, we can observe that execution time drops significally. In the following table with execution times for number of processors, _time is expressed in seconds_.
 
 | Processors | Time Median |   Time Min  |   Time Max  |
 |:----------:|:-----------:|:-----------:|:-----------:|
@@ -233,7 +233,7 @@ By increasing the number of processors with the same problem size, execution tim
 
 What happens if both problem size and number of processors increase, keeping the work per processor fixed?
 
-Running `jacobi-parallel` starting from _2_ processors and _512_ rows, each time doubling both, we can observe that, compared to sequential execution, execution time increases _linearly_.
+Running `jacobi-parallel` starting from _2_ processors and _512_ rows, each time doubling both, we can observe that, compared to sequential execution, execution time increases _linearly_. In the following table with execution times for number of processors, _time is expressed in seconds_.
 
 | Processors | Time Median |  Time Min  |  Time Max  |
 |:----------:|:-----------:|:----------:|:----------:|
