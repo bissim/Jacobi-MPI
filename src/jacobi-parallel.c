@@ -139,18 +139,19 @@ int main (int argc, char **argv) {
     }
 
     // check whether number of processor is power of 2
-    if ((nproc & (nproc - 1)) != 0) {
-        if (me == MASTER) {
-            fprintf(
-                stderr,
-                "\a[P%d] Number of processor must be a power of 2!",
-                me
-            );
-        }
+    // if ((nproc & (nproc - 1)) != 0) {
+    //     if (me == MASTER) {
+    //         fprintf(
+    //             stderr,
+    //             "\a[P%d] Number of processor must be a power of 2!\n",
+    //             me
+    //         );
+    //     }
 
-        MPI_Abort(COMM, EXIT_FAILURE);
-    }
-    else if (n == nproc) {
+    //     MPI_Abort(COMM, EXIT_FAILURE);
+    // }
+    // else if (n == nproc) {
+    if (n == nproc) {
         if (me == MASTER) {
             fprintf(
                 stderr,
