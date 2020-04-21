@@ -1,6 +1,7 @@
 #!/usr/bin/make -f
 
 CC = clang
+MKDIR = mkdir -p
 CFLAGS = \
 		-std=c99 \
 		-m64 \
@@ -16,13 +17,14 @@ CFLAGS = \
 LDFLAGS = -lm
 LIBDIR = ./lib
 SRCDIR = ./src
+BINDIR = ./bin
 INCLUDESDIR = ./include
 APPSERNAME = jacobi-serial
 APPPARNAME = jacobi-parallel
 APPUTILS = jacobiutils
 
 .PHONY: all
-all: clean $(APPUTILS) $(APPSERNAME) $(APPPARNAME) doc
+all: clean $(APPUTILS) makebindir $(APPSERNAME) $(APPPARNAME) doc
 
 $(APPUTILS): \
 		$(LIBDIR)/matrixutils.c \
@@ -37,15 +39,21 @@ $(APPUTILS): \
 	ar -cvq $(LIBDIR)/lib$(APPUTILS).a $(LIBDIR)/*.o
 	rm $(LIBDIR)/*.o
 
+.PHONY: makebindir
+makebindir: $(BINDIR)/
+
+$(BINDIR)/:
+	$(MKDIR) $@
+
 .PHONY: $(APPSERNAME)
 $(APPSERNAME): $(LIBDIR)/lib$(APPUTILS).a $(SRCDIR)/$(APPSERNAME).c
 	$(CC) $(CFLAGS) $(SRCDIR)/$(APPSERNAME).c $(LDFLAGS) -L$(LIBDIR) \
-		-l$(APPUTILS) -o ./bin/$(APPSERNAME)
+		-l$(APPUTILS) -o $(BINDIR)/$(APPSERNAME)
 
 .PHONY: $(APPPARNAME)
 $(APPPARNAME): $(LIBDIR)/lib$(APPUTILS).a $(SRCDIR)/$(APPPARNAME).c
 	mpicc $(CFLAGS) -no-pie $(SRCDIR)/$(APPPARNAME).c $(LDFLAGS) -L$(LIBDIR) \
-		-l$(APPUTILS) -o ./bin/$(APPPARNAME)
+		-l$(APPUTILS) -o $(BINDIR)/$(APPPARNAME)
 
 .PHONY: doc
 doc: Doxyfile
@@ -54,7 +62,7 @@ doc: Doxyfile
 	#-rm -r doc/xml/
 
 clean:
-	-rm ./bin/$(APPSERNAME)
-	-rm ./bin/$(APPPARNAME)
+	-rm $(BINDIR)/$(APPSERNAME)
+	-rm $(BINDIR)/$(APPPARNAME)
 	-rm -r ./doc/xml/
 	-rm -r ./doc/*.md
